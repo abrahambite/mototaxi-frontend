@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador - MotoTaxi</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Panel de Administrador</h1>
+        <button id="logout">Cerrar Sesión</button>
+    </header>
+    
+    <section id="viajes">
+        <h2>Gestión de Viajes</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pasajero</th>
+                    <th>Conductor</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="listaViajes">
+                <!-- Aquí se insertarán los viajes dinámicamente -->
+            </tbody>
+        </table>
+    </section>
+    
+    <section id="pagos">
+        <h2>Gestión de Pagos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Conductor</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="listaPagos">
+                <!-- Aquí se insertarán los pagos dinámicamente -->
+            </tbody>
+        </table>
+    </section>
+    
+    <script src="admin.js"></script>
+</body>
+</html>
