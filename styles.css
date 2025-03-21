@@ -1,64 +1,100 @@
-/* ==== Estilos Generales ==== */
-body {
-    font-family: Arial, sans-serif;
+/* 📌 General */
+* {
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    box-sizing: border-box;
+    font-family: "Arial", sans-serif;
 }
 
-/* ==== Contenedores Generales ==== */
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: auto;
+body {
+    background-image: url("img/background.jpg"); /* Cambia 'background.jpg' por tu imagen de fondo */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
     padding: 20px;
-    background: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
 }
 
-/* ==== Botones ==== */
-.btn {
-    display: inline-block;
-    padding: 10px 20px;
-    font-size: 16px;
+/* 📌 Contenedor principal */
+.container {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
     text-align: center;
-    color: #fff;
-    background: #ff5722;
-    border: none;
+}
+
+/* 📌 Logo */
+.logo {
+    width: 100px;
+    margin: 0 auto 20px;
+}
+
+.logo img {
+    width: 100%;
+    max-width: 120px;
+}
+
+/* 📌 Títulos */
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* 📌 Campos de entrada */
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
     border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+/* 📌 Botones */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    font-size: 16px;
+    border: none;
     cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
     transition: 0.3s;
 }
 
-.btn:hover {
-    background: #e64a19;
+button:hover {
+    background-color: #218838;
 }
 
-/* ==== Formularios ==== */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 20px;
+/* 📌 Links */
+p {
+    text-align: center;
+    margin-top: 10px;
 }
 
-input, select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
+a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
 }
 
-/* ==== Encabezados ==== */
-h1, h2, h3 {
-    color: #333;
+a:hover {
+    text-decoration: underline;
 }
 
-/* ==== Responsividad ==== */
+/* 📌 Responsivo */
 @media (max-width: 768px) {
     .container {
-        width: 100%;
-        box-shadow: none;
+        width: 95%;
+        padding: 20px;
     }
 }
