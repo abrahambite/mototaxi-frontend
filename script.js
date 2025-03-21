@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginForm = document.getElementById("loginForm");
     const registerForm = document.getElementById("registerForm");
 
-    // 馃搶 Manejar LOGIN
+    // ?? Manejar LOGIN
     if (loginForm) {
         loginForm.addEventListener("submit", async function (event) {
             event.preventDefault();
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
-            console.log("Intentando login con:", email, password); // 馃攳 Depuraci贸n
+            console.log("Intentando login con:", email, password); // ?? Depuración
 
             try {
                 const response = await fetch("https://mototaxi-api-production.up.railway.app/api/auth/login", {
@@ -21,11 +21,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const data = await response.json();
 
-                console.log("Respuesta del backend:", data); // 馃攳 Depuraci贸n
+                console.log("Respuesta del backend:", data); // ?? Depuración
 
                 if (response.ok) {
-                    alert("Inicio de sesi贸n exitoso. Redirigiendo...");
-                    window.location.href = "solicitud-viaje.html"; // Redirige a la p谩gina de solicitud
+                    alert("Inicio de sesión exitoso. Redirigiendo...");
+                    window.location.href = "solicitud-viaje.html"; // Redirige a la página de solicitud
                 } else {
                     alert("Error en el login: " + data.error);
                 }
@@ -35,27 +35,30 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 馃搶 Manejar REGISTRO
+    // ?? Manejar REGISTRO
     if (registerForm) {
         registerForm.addEventListener("submit", async function (event) {
             event.preventDefault();
 
-            const email = document.getElementById("registerEmail").value;
-            const password = document.getElementById("registerPassword").value;
-            const userType = document.getElementById("userType").value;
+            const nombre = document.getElementById("nombre").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const userType = document.getElementById("tipo_usuario").value;
+            const licencia = document.getElementById("licencia") ? document.getElementById("licencia").value : "";
+            const vehiculo = document.getElementById("vehiculo") ? document.getElementById("vehiculo").value : "";
 
-            console.log("Intentando registro con:", email, password, userType); // 馃攳 Depuraci贸n
+            console.log("Intentando registro con:", nombre, email, password, userType, licencia, vehiculo); // ?? Depuración
 
             try {
                 const response = await fetch("https://mototaxi-api-production.up.railway.app/api/auth/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password, userType })
+                    body: JSON.stringify({ nombre, email, password, userType, licencia, vehiculo })
                 });
 
                 const data = await response.json();
 
-                console.log("Respuesta del backend:", data); // 馃攳 Depuraci贸n
+                console.log("Respuesta del backend:", data); // ?? Depuración
 
                 if (response.ok) {
                     alert("Registro exitoso. Redirigiendo al login...");
