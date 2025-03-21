@@ -14,7 +14,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         try {
-            const response = await fetch("http://localhost:3000/api/rides/request", {
+            const response = await fetch("https://mototaxi-api-production.up.railway.app/api/rides/request", {
+
 
                 method: "POST",
                 headers: {
