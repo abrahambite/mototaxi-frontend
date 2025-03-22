@@ -48,6 +48,7 @@
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer();
       directionsRenderer.setMap(map);
+new google.maps.places.Autocomplete(document.getElementById("destino"));
 
       // Obtener ubicación del usuario
       if (navigator.geolocation) {
