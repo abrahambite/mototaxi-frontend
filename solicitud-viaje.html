@@ -15,13 +15,7 @@
       <input type="hidden" id="origen" name="origen" />
 
       <label for="destino">Destino:</label>
-      <input
-        type="text"
-        id="destino"
-        name="destino"
-        placeholder="Ingresa tu destino"
-        required
-      />
+      <input type="text" id="destino" name="destino" placeholder="Ingresa tu destino" required />
 
       <button type="submit">Solicitar Viaje</button>
     </form>
@@ -48,9 +42,11 @@
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer();
       directionsRenderer.setMap(map);
-new google.maps.places.Autocomplete(document.getElementById("destino"));
 
-      // Obtener ubicación del usuario
+      // Activar autocompletado en campo "destino"
+      new google.maps.places.Autocomplete(document.getElementById("destino"));
+
+      // Obtener ubicación del usuario y convertirla a dirección
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           function (position) {
@@ -59,7 +55,6 @@ new google.maps.places.Autocomplete(document.getElementById("destino"));
               lng: position.coords.longitude,
             };
 
-            // Convertir coordenadas a dirección con Geocoder
             const geocoder = new google.maps.Geocoder();
             geocoder.geocode({ location: origenCoords }, function (results, status) {
               if (status === "OK" && results[0]) {
@@ -78,20 +73,18 @@ new google.maps.places.Autocomplete(document.getElementById("destino"));
       }
     }
 
-    document
-      .getElementById("solicitudViaje")
-      .addEventListener("submit", function (event) {
-        event.preventDefault();
+    document.getElementById("solicitudViaje").addEventListener("submit", function (event) {
+      event.preventDefault();
 
-        const origen = document.getElementById("origen").value;
-        const destino = document.getElementById("destino").value;
+      const origen = document.getElementById("origen").value;
+      const destino = document.getElementById("destino").value;
 
-        if (origen && destino) {
-          calcularRuta(origen, destino);
-        } else {
-          alert("Falta origen o destino.");
-        }
-      });
+      if (origen && destino) {
+        calcularRuta(origen, destino);
+      } else {
+        alert("Falta origen o destino.");
+      }
+    });
 
     function calcularRuta(origen, destino) {
       const request = {
@@ -103,8 +96,19 @@ new google.maps.places.Autocomplete(document.getElementById("destino"));
       directionsService.route(request, function (result, status) {
         if (status === google.maps.DirectionsStatus.OK) {
           directionsRenderer.setDirections(result);
+
           const tiempo = result.routes[0].legs[0].duration.text;
-          document.getElementById("tiempoEstimado").textContent = `Tiempo estimado: ${tiempo}`;
+          const duracionMin = result.routes[0].legs[0].duration.value / 60;
+          const distanciaKm = result.routes[0].legs[0].distance.value / 1000;
+
+          const precioPorKm = 10;
+          const costo = (distanciaKm * precioPorKm).toFixed(2);
+
+          document.getElementById("tiempoEstimado").innerHTML = `
+            🕒 Tiempo estimado de viaje: <strong>${tiempo}</strong><br>
+            📏 Distancia: <strong>${distanciaKm.toFixed(2)} km</strong><br>
+            💰 Costo aproximado: <strong>$${costo} MXN</strong>
+          `;
         } else {
           alert("No se pudo calcular la ruta. Intenta con otra dirección.");
         }
@@ -112,11 +116,9 @@ new google.maps.places.Autocomplete(document.getElementById("destino"));
     }
   </script>
 
-  <!-- Google Maps con Places y callback -->
-  <script
-    async
-    defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQkcDUVUZ-EJzflaKW9fvE1Y-7jTskzoc&callback=initMap&libraries=places"
-  ></script>
+  <!-- Google Maps API -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQkcDUVUZ-EJzflaKW9fvE1Y-7jTskzoc&callback=initMap&libraries=places">
+  </script>
 </body>
 </html>
