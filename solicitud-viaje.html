@@ -27,6 +27,11 @@
 
     <h3>Tiempo Estimado de Viaje</h3>
     <p id="tiempoEstimado">Ingresa la ruta para calcular el tiempo.</p>
+
+    <!-- Botón que aparece después de calcular ruta -->
+    <button id="confirmarViaje" style="display: none; margin-top: 20px; background-color: #28a745; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
+      Confirmar Viaje
+    </button>
   </div>
 
   <script>
@@ -60,16 +65,16 @@
               if (status === "OK" && results[0]) {
                 document.getElementById("origen").value = results[0].formatted_address;
               } else {
-                alert("No se pudo obtener tu direcci贸n actual.");
+                alert("No se pudo obtener tu dirección actual.");
               }
             });
           },
           function () {
-            alert("Por favor activa la ubicaci贸n para usar esta funci贸n.");
+            alert("Por favor activa la ubicación para usar esta función.");
           }
         );
       } else {
-        alert("Tu navegador no soporta geolocalizaci贸n.");
+        alert("Tu navegador no soporta geolocalización.");
       }
     }
 
@@ -105,18 +110,27 @@
           const costo = (distanciaKm * precioPorKm).toFixed(2);
 
           document.getElementById("tiempoEstimado").innerHTML = `
-            馃晵 Tiempo estimado de viaje: <strong>${tiempo}</strong><br>
-            馃搹 Distancia: <strong>${distanciaKm.toFixed(2)} km</strong><br>
-            馃挵 Costo aproximado: <strong>$${costo} MXN</strong>
+            ?? Tiempo estimado de viaje: <strong>${tiempo}</strong><br>
+            ?? Distancia: <strong>${distanciaKm.toFixed(2)} km</strong><br>
+            ?? Costo aproximado: <strong>$${costo} MXN</strong>
           `;
+
+          // Mostrar botón de confirmación
+          document.getElementById("confirmarViaje").style.display = "block";
+
         } else {
-          alert("No se pudo calcular la ruta. Intenta con otra direcci贸n.");
+          alert("No se pudo calcular la ruta. Intenta con otra dirección.");
         }
       });
     }
+
+    // Redireccionar al confirmar viaje
+    document.getElementById("confirmarViaje").addEventListener("click", function () {
+      window.location.href = "seguimiento.html";
+    });
   </script>
 
-  <!-- Google Maps API con nueva clave -->
+  <!-- Google Maps API -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&callback=initMap&libraries=places">
   </script>
