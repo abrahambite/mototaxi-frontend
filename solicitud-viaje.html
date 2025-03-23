@@ -8,10 +8,12 @@
 </head>
 <body>
   <div class="container">
+    <!-- LOGOTIPO -->
+    <img src="img/logo.jpeg" alt="Logo MotoTaxi" style="max-width: 150px; margin: 10px auto; display: block;" />
+
     <h2>Solicitar un Viaje</h2>
 
     <form id="solicitudViaje">
-      <!-- ORIGEN oculto (se obtiene por GPS) -->
       <input type="hidden" id="origen" name="origen" />
 
       <label for="destino">Destino:</label>
@@ -43,10 +45,8 @@
       directionsRenderer = new google.maps.DirectionsRenderer();
       directionsRenderer.setMap(map);
 
-      // Activar autocompletado en campo "destino"
       new google.maps.places.Autocomplete(document.getElementById("destino"));
 
-      // Obtener ubicación del usuario y convertirla a dirección
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           function (position) {
@@ -116,9 +116,9 @@
     }
   </script>
 
-  <!-- Google Maps API -->
+  <!-- Google Maps API con nueva clave -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQkcDUVUZ-EJzflaKW9fvE1Y-7jTskzoc&callback=initMap&libraries=places">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&callback=initMap&libraries=places">
   </script>
 </body>
 </html>
