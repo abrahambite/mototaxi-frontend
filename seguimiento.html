@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seguimiento - MotoGo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- LOGOTIPO -->
+    <img src="img/logo.jpeg" alt="Logo MotoGo" style="max-width: 150px; margin: 10px auto; display: block;" />
+
+    <h2>Tu unidad viene en camino 🛵</h2>
+
+    <div id="map" style="width: 100%; height: 400px; margin-bottom: 15px;"></div>
+
+    <div id="choferInfo" style="margin-bottom: 10px;">
+      👤 <strong>Chofer:</strong> Luis Ramírez<br>
+      🏍️ <strong>Unidad:</strong> Italika 125cc - Negro<br>
+      📞 <strong>Contacto:</strong> 686-123-4567
+    </div>
+
+    <button id="cancelarViaje" style="background-color: crimson; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
+      Cancelar Viaje
+    </button>
+  </div>
+
+  <script>
+    let map;
+    let userMarker, driverMarker;
+    let choferLat = 32.622; // Punto inicial del chofer (simulado)
+    let choferLng = -115.460;
+
+    function initMap() {
+      // Punto del usuario simulado (aquí podríamos usar localStorage o algo real)
+      const usuario = { lat: 32.6245, lng: -115.4521 };
+
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: usuario,
+        zoom: 14,
+      });
+
+      userMarker = new google.maps.Marker({
+        position: usuario,
+        map: map,
+        label: "Tú",
+        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+      });
+
+      driverMarker = new google.maps.Marker({
+        position: { lat: choferLat, lng: choferLng },
+        map: map,
+        label: "Moto",
+        icon: "http://maps.google.com/mapfiles/ms/icons/motorcycling.png"
+      });
+
+      simularMovimiento(choferLat, choferLng, usuario.lat, usuario.lng);
+    }
+
+    function simularMovimiento(lat1, lng1, lat2, lng2) {
+      const steps = 100;
+      let count = 0;
+      const deltaLat = (lat2 - lat1) / steps;
+      const deltaLng = (lng2 - lng1) / steps;
+
+      const interval = setInterval(() => {
+        if (count >= steps) {
+          clearInterval(interval);
+          return;
+        }
+
+        choferLat += deltaLat;
+        choferLng += deltaLng;
+
+        driverMarker.setPosition({ lat: choferLat, lng: choferLng });
+        map.panTo({ lat: choferLat, lng: choferLng });
+
+        count++;
+      }, 500);
+    }
+
+    document.getElementById("cancelarViaje").addEventListener("click", function () {
+      alert("El viaje ha sido cancelado.");
+      window.location.href = "solicitud-viaje.html";
+    });
+  </script>
+
+  <!-- Google Maps API -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&callback=initMap">
+  </script>
+</body>
+</html>
