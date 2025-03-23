@@ -3,19 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solicitar Viaje - MotoTaxi</title>
+  <title>Solicitar Viaje - MotoGo</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .radio-container {
+      display: flex;
+      justify-content: space-around;
+      margin: 10px 0;
+    }
+    .radio-option {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .radio-option input {
+      margin-right: 8px;
+    }
+    .radio-option.selected {
+      border-color: #28a745;
+      background-color: #e7f7ec;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <img src="img/logo.jpeg" alt="Logo MotoTaxi" style="max-width: 150px; margin: 10px auto; display: block;" />
-
+    <img src="img/logo.jpeg" alt="Logo MotoGo" style="max-width: 150px; margin: 10px auto; display: block;" />
     <h2>Solicitar un Viaje</h2>
 
     <form id="solicitudViaje">
       <input type="hidden" id="origen" name="origen" />
+
       <label for="destino">Destino:</label>
       <input type="text" id="destino" name="destino" placeholder="Ingresa tu destino" required />
+
+      <label>Método de Pago:</label>
+      <div class="radio-container">
+        <label class="radio-option selected">
+          <input type="radio" name="pago" value="efectivo" checked /> Efectivo
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="pago" value="tarjeta" /> Tarjeta
+        </label>
+      </div>
+
       <button type="submit">Solicitar Viaje</button>
     </form>
 
@@ -61,17 +93,26 @@
               if (status === "OK" && results[0]) {
                 document.getElementById("origen").value = results[0].formatted_address;
               } else {
-                alert("No se pudo obtener tu direccion actual.");
+                alert("No se pudo obtener tu dirección actual.");
               }
             });
           },
           function () {
-            alert("Por favor activa la ubicacion para usar esta funcion.");
+            alert("Por favor activa la ubicación para usar esta función.");
           }
         );
       } else {
-        alert("Tu navegador no soporta geolocalizacion.");
+        alert("Tu navegador no soporta geolocalización.");
       }
+
+      // Selector visual elegante
+      document.querySelectorAll('.radio-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          opt.querySelector('input').checked = true;
+        });
+      });
     }
 
     document.getElementById("solicitudViaje").addEventListener("submit", function (event) {
@@ -99,11 +140,8 @@
           directionsRenderer.setDirections(result);
 
           const tiempo = result.routes[0].legs[0].duration.text;
-          const duracionMin = result.routes[0].legs[0].duration.value / 60;
           const distanciaKm = result.routes[0].legs[0].distance.value / 1000;
-
-          const precioPorKm = 10;
-          const costo = (distanciaKm * precioPorKm).toFixed(2);
+          const costo = (distanciaKm * 10).toFixed(2);
 
           document.getElementById("tiempoEstimado").innerHTML = `
             ?? Tiempo estimado de viaje: <strong>${tiempo}</strong><br>
@@ -113,22 +151,23 @@
 
           document.getElementById("confirmarViaje").style.display = "block";
         } else {
-          alert("No se pudo calcular la ruta. Intenta con otra direccion.");
+          alert("No se pudo calcular la ruta. Intenta con otra dirección.");
         }
       });
     }
 
-    // Al confirmar, guardar el viaje en el backend real
     document.getElementById("confirmarViaje").addEventListener("click", function () {
+      const metodoPago = document.querySelector('input[name="pago"]:checked').value;
       const destino = directionsRenderer.getDirections().routes[0].legs[0].end_location;
 
       const viaje = {
-        pasajero_id: 1, // ¡ö Esto debe cambiarse por el ID real del usuario autenticado
+        pasajero_id: 1, // ID fijo para pruebas
         origen: origenCoords,
         destino: {
           lat: destino.lat(),
           lng: destino.lng()
-        }
+        },
+        metodo_pago: metodoPago
       };
 
       fetch("https://mototaxi-api-production.up.railway.app/viajes", {
@@ -148,7 +187,7 @@
     });
   </script>
 
-  <!-- Google Maps API -->
+  <!-- Google Maps -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&callback=initMap&libraries=places">
   </script>
