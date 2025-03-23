@@ -8,17 +8,14 @@
 </head>
 <body>
   <div class="container">
-    <!-- LOGOTIPO -->
     <img src="img/logo.jpeg" alt="Logo MotoTaxi" style="max-width: 150px; margin: 10px auto; display: block;" />
 
     <h2>Solicitar un Viaje</h2>
 
     <form id="solicitudViaje">
       <input type="hidden" id="origen" name="origen" />
-
       <label for="destino">Destino:</label>
       <input type="text" id="destino" name="destino" placeholder="Ingresa tu destino" required />
-
       <button type="submit">Solicitar Viaje</button>
     </form>
 
@@ -28,7 +25,6 @@
     <h3>Tiempo Estimado de Viaje</h3>
     <p id="tiempoEstimado">Ingresa la ruta para calcular el tiempo.</p>
 
-    <!-- Bot車n que aparece despu谷s de calcular ruta -->
     <button id="confirmarViaje" style="display: none; margin-top: 20px; background-color: #28a745; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
       Confirmar Viaje
     </button>
@@ -65,16 +61,16 @@
               if (status === "OK" && results[0]) {
                 document.getElementById("origen").value = results[0].formatted_address;
               } else {
-                alert("No se pudo obtener tu direcci車n actual.");
+                alert("No se pudo obtener tu direccion actual.");
               }
             });
           },
           function () {
-            alert("Por favor activa la ubicaci車n para usar esta funci車n.");
+            alert("Por favor activa la ubicacion para usar esta funcion.");
           }
         );
       } else {
-        alert("Tu navegador no soporta geolocalizaci車n.");
+        alert("Tu navegador no soporta geolocalizacion.");
       }
     }
 
@@ -115,18 +111,40 @@
             ?? Costo aproximado: <strong>$${costo} MXN</strong>
           `;
 
-          // Mostrar bot車n de confirmaci車n
           document.getElementById("confirmarViaje").style.display = "block";
-
         } else {
-          alert("No se pudo calcular la ruta. Intenta con otra direcci車n.");
+          alert("No se pudo calcular la ruta. Intenta con otra direccion.");
         }
       });
     }
 
-    // Redireccionar al confirmar viaje
+    // Al confirmar, guardar el viaje en el backend real
     document.getElementById("confirmarViaje").addEventListener("click", function () {
-      window.location.href = "seguimiento.html";
+      const destino = directionsRenderer.getDirections().routes[0].legs[0].end_location;
+
+      const viaje = {
+        pasajero_id: 1, // ← Esto debe cambiarse por el ID real del usuario autenticado
+        origen: origenCoords,
+        destino: {
+          lat: destino.lat(),
+          lng: destino.lng()
+        }
+      };
+
+      fetch("https://mototaxi-api-production.up.railway.app/viajes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(viaje)
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("? Viaje guardado:", data);
+        window.location.href = "seguimiento.html";
+      })
+      .catch(err => {
+        console.error("? Error al guardar el viaje:", err);
+        alert("Error al guardar el viaje");
+      });
     });
   </script>
 
