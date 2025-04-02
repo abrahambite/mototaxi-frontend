@@ -1,67 +1,73 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel del Conductor - MotoTaxi</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento de Viaje - MotoTaxi</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    #map { width: 100%; height: 300px; border-radius: 10px; margin-bottom: 20px; }
+    .container { padding: 30px; text-align: center; font-family: Arial; }
+    .info { margin-top: 15px; font-size: 16px; line-height: 1.6em; }
+    .info b { display: block; margin-top: 8px; }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Panel del Conductor</h1>
-        <button id="logout">Cerrar Sesión</button>
-    </header>
+  <div class="container">
+    <img src="img/logo.png" alt="Logo" style="height: 60px; margin-bottom: 15px">
+    <h2>Tu unidad viene en camino 🛵</h2>
+    <div id="map"></div>
+    <div class="info" id="info"></div>
+    <button onclick="window.location.href='solicitud-viaje.html'" style="margin-top: 20px; padding: 12px 20px; background-color: crimson; color: white; border: none; border-radius: 8px;">
+      Cancelar Viaje
+    </button>
+  </div>
 
-    <section id="viajes-disponibles">
-        <h2>Viajes Disponibles</h2>
-        <ul id="lista-viajes"></ul>
-    </section>
+  <script>
+    async function initMap() {
+      const response = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+      const data = await response.json();
+      const viaje = data[data.length - 1];
 
-    <script>
-        async function cargarViajesDisponibles() {
-            try {
-                const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes-disponibles");
-                const viajes = await res.json();
-                const lista = document.getElementById("lista-viajes");
-                lista.innerHTML = "";
+      if (!viaje || !viaje.conductor_id) {
+        document.getElementById("map").style.display = "none";
+        document.getElementById("info").innerHTML = "<p><b>Esperando que un conductor acepte tu viaje...</b></p>";
+        return;
+      }
 
-                viajes.forEach(viaje => {
-                    const item = document.createElement("li");
-                    item.innerHTML = `
-                        <strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}<br>
-                        <strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}<br>
-                        <button onclick="aceptarViaje(${viaje.id})">Aceptar</button>
-                        <hr>
-                    `;
-                    lista.appendChild(item);
-                });
-            } catch (err) {
-                console.error("Error al cargar viajes:", err);
-            }
-        }
+      const origen = viaje.origen || { lat: 32.645, lng: -115.474 };
+      const destino = viaje.destino || { lat: 32.652, lng: -115.472 };
 
-        async function aceptarViaje(idViaje) {
-            try {
-                const res = await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${idViaje}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ estado: "aceptado", conductor_id: 2 }) // ID conductor fijo para pruebas
-                });
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: origen
+      });
 
-                const data = await res.json();
-                alert("Viaje aceptado ✅");
-                console.log("Viaje actualizado:", data);
-                cargarViajesDisponibles();
-            } catch (err) {
-                console.error("Error al aceptar viaje:", err);
-            }
-        }
+      const marker = new google.maps.Marker({ position: origen, map, icon: "https://cdn-icons-png.flaticon.com/512/8082/8082994.png", scaledSize: new google.maps.Size(40, 40) });
 
-        document.getElementById("logout").addEventListener("click", () => {
-            window.location.href = "index.html";
-        });
+      // Movimiento automático simulado
+      let step = 0;
+      const totalSteps = 50;
+      const latStep = (destino.lat - origen.lat) / totalSteps;
+      const lngStep = (destino.lng - origen.lng) / totalSteps;
 
-        cargarViajesDisponibles();
-    </script>
+      const move = setInterval(() => {
+        if (step >= totalSteps) return clearInterval(move);
+        const lat = origen.lat + latStep * step;
+        const lng = origen.lng + lngStep * step;
+        marker.setPosition({ lat, lng });
+        map.panTo({ lat, lng });
+        step++;
+      }, 300);
+
+      document.getElementById("info").innerHTML = `
+        <b>🧑‍✈️ Chofer:</b> Luis Ramírez
+        <b>🏍️ Unidad:</b> Italika 125cc - Negro
+        <b>📞 Contacto:</b> 686-123-4567
+      `;
+    }
+  </script>
+
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&callback=initMap"></script>
 </body>
 </html>
