@@ -5,31 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solicitar Viaje - MotoGo</title>
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    .radio-container {
-      display: flex;
-      justify-content: space-around;
-      margin: 10px 0;
-    }
-    .radio-option {
-      border: 2px solid #ccc;
-      border-radius: 10px;
-      padding: 10px 20px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .radio-option input {
-      margin-right: 8px;
-    }
-    .radio-option.selected {
-      border-color: #28a745;
-      background-color: #e7f7ec;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
-    <img src="img/logo.jpeg" alt="Logo MotoGo" style="max-width: 150px; margin: 10px auto; display: block;" />
     <h2>Solicitar un Viaje</h2>
 
     <form id="solicitudViaje">
@@ -105,7 +83,6 @@
         alert("Tu navegador no soporta geolocalización.");
       }
 
-      // Selector visual elegante
       document.querySelectorAll('.radio-option').forEach(opt => {
         opt.addEventListener('click', () => {
           document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
@@ -144,7 +121,7 @@
           const costo = (distanciaKm * 10).toFixed(2);
 
           document.getElementById("tiempoEstimado").innerHTML = `
-            ?? Tiempo estimado de viaje: <strong>${tiempo}</strong><br>
+            ? Tiempo estimado: <strong>${tiempo}</strong><br>
             ?? Distancia: <strong>${distanciaKm.toFixed(2)} km</strong><br>
             ?? Costo aproximado: <strong>$${costo} MXN</strong>
           `;

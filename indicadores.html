@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Ejecutivo - Indicadores</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      margin: 0;
+      padding: 40px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 40px;
+    }
+    .indicadores {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 1.2em;
+      color: #555;
+    }
+    .card p {
+      font-size: 2.5em;
+      margin-top: 10px;
+      color: #28a745;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Panel Ejecutivo - Indicadores Generales</h1>
+
+  <div class="indicadores" id="indicadores"></div>
+
+  <script>
+    async function cargarIndicadores() {
+      const contenedor = document.getElementById("indicadores");
+      contenedor.innerHTML = "<p style='text-align:center;'>Cargando métricas...</p>";
+
+      try {
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        const viajes = await res.json();
+
+        const totalViajes = viajes.length;
+        const activos = viajes.filter(v => v.estado === "pendiente").length;
+        const finalizados = viajes.filter(v => v.estado === "finalizado").length;
+        const cancelados = viajes.filter(v => v.estado === "cancelado").length;
+
+        contenedor.innerHTML = `
+          <div class="card">
+            <h3>🚀 Total de Viajes</h3>
+            <p>${totalViajes}</p>
+          </div>
+          <div class="card">
+            <h3>⏳ Pendientes</h3>
+            <p>${activos}</p>
+          </div>
+          <div class="card">
+            <h3>✅ Completados</h3>
+            <p>${finalizados}</p>
+          </div>
+          <div class="card">
+            <h3>❌ Cancelados</h3>
+            <p>${cancelados}</p>
+          </div>
+        `;
+      } catch (err) {
+        contenedor.innerHTML = `<p style='color:red;text-align:center;'>Error al cargar indicadores.</p>`;
+        console.error("Error al cargar:", err);
+      }
+    }
+
+    cargarIndicadores();
+  </script>
+</body>
+</html>

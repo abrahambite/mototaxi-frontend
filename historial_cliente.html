@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Viajes - Cliente</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f4f8fb; }
+    h2 { text-align: center; color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+    th { background-color: #28a745; color: white; }
+  </style>
+</head>
+<body>
+  <h2>🧾 Historial de Mis Viajes</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Estado</th>
+        <th>Conductor</th>
+        <th>Método de Pago</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-viajes"></tbody>
+  </table>
+
+  <script>
+    async function cargarViajesCliente() {
+      const tabla = document.getElementById("tabla-viajes");
+      tabla.innerHTML = "<tr><td colspan='4'>Cargando...</td></tr>";
+
+      try {
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        const viajes = await res.json();
+
+        const misViajes = viajes.filter(v => v.pasajero_id === 1); // ID fijo para cliente
+
+        if (misViajes.length === 0) {
+          tabla.innerHTML = "<tr><td colspan='4'>No hay viajes registrados.</td></tr>";
+          return;
+        }
+
+        tabla.innerHTML = "";
+        misViajes.forEach((v, i) => {
+          tabla.innerHTML += `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${v.estado}</td>
+              <td>${v.conductor_id ?? 'Por asignar'}</td>
+              <td>${v.metodo_pago ?? 'No registrado'}</td>
+            </tr>`;
+        });
+      } catch (err) {
+        tabla.innerHTML = "<tr><td colspan='4'>Error al cargar viajes.</td></tr>";
+        console.error("Error:", err);
+      }
+    }
+
+    cargarViajesCliente();
+  </script>
+</body>
+</html>

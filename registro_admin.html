@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro Admin - MotoTaxi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Registro de Administrador</h2>
+    <form id="registroForm">
+      <label for="nombre">Nombre:</label>
+      <input type="text" id="nombre" name="nombre" required />
+
+      <label for="telefono">Número de Teléfono:</label>
+      <input type="tel" id="telefono" name="telefono" required />
+
+      <label for="password">Contraseña:</label>
+      <input type="password" id="password" name="password" required />
+
+      <button type="submit">Registrarse</button>
+    </form>
+    <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const form = document.getElementById("registroForm");
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const nombre = document.getElementById("nombre").value;
+        const telefono = document.getElementById("telefono").value;
+        const password = document.getElementById("password").value;
+
+        const data = { nombre, telefono, password, userType: "admin" };
+
+        try {
+          const res = await fetch("https://mototaxi-api-production.up.railway.app/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+          });
+
+          const result = await res.json();
+
+          if (res.ok) {
+            alert("Administrador registrado. Redirigiendo al login...");
+            window.location.href = "login.html";
+          } else {
+            alert("Error en el registro: " + result.error);
+          }
+        } catch (err) {
+          console.error("Error al registrar admin:", err);
+          alert("Error de conexión");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

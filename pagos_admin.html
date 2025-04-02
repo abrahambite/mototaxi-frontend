@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Pagos - MotoTaxi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Panel de Pagos</h2>
+
+    <label for="tipo">Selecciona tu rol:</label>
+    <select id="tipo">
+      <option value="pasajero">Pasajero</option>
+      <option value="conductor">Conductor</option>
+      <option value="admin">Administrador</option>
+    </select>
+
+    <div id="resultados" style="margin-top: 30px;"></div>
+  </div>
+
+  <script>
+    document.getElementById("tipo").addEventListener("change", async function () {
+      const tipo = this.value;
+      const div = document.getElementById("resultados");
+      div.innerHTML = "<p>Cargando datos...</p>";
+
+      try {
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        const data = await res.json();
+        let html = "";
+
+        if (tipo === "admin") {
+          html += `<h3>Todos los viajes</h3>`;
+          html += `<ul>`;
+          data.forEach(v => {
+            html += `<li>#${v.id} | ${v.estado} | Pasajero: ${v.pasajero_id} | Conductor: ${v.conductor_id ?? 'no asignado'}</li>`;
+          });
+          html += `</ul>`;
+        } else if (tipo === "conductor") {
+          html += `<h3>Viajes como conductor</h3>`;
+          const viajesConductor = data.filter(v => v.conductor_id === 2); // ID fijo de prueba
+          html += `<ul>`;
+          viajesConductor.forEach(v => {
+            html += `<li>#${v.id} | ${v.estado}</li>`;
+          });
+          html += `</ul>`;
+        } else {
+          html += `<h3>Mis viajes como pasajero</h3>`;
+          const viajesPasajero = data.filter(v => v.pasajero_id === 1); // ID fijo de prueba
+          html += `<ul>`;
+          viajesPasajero.forEach(v => {
+            html += `<li>#${v.id} | ${v.estado}</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        div.innerHTML = html;
+      } catch (err) {
+        div.innerHTML = `<p>Error al cargar pagos.</p>`;
+        console.error("Error:", err);
+      }
+    });
+  </script>
+</body>
+</html>

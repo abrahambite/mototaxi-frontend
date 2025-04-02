@@ -5,33 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del Conductor - MotoTaxi</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://maps.googleapis.com/maps/api/js?key=TU_CLAVE_API&libraries=places"></script>
 </head>
 <body>
     <header>
         <h1>Panel del Conductor</h1>
         <button id="logout">Cerrar Sesión</button>
     </header>
-    
+
     <section id="viajes-disponibles">
         <h2>Viajes Disponibles</h2>
         <ul id="lista-viajes"></ul>
     </section>
-    
-    <section id="detalle-viaje" style="display: none;">
-        <h2>Detalle del Viaje</h2>
-        <p><strong>Origen:</strong> <span id="origen"></span></p>
-        <p><strong>Destino:</strong> <span id="destino"></span></p>
-        <p><strong>Distancia:</strong> <span id="distancia"></span></p>
-        <p><strong>Tiempo Estimado:</strong> <span id="tiempo"></span></p>
-        <button id="aceptar-viaje">Aceptar Viaje</button>
-    </section>
-    
-    <section id="mapa-container" style="display: none;">
-        <h2>Mapa</h2>
-        <div id="mapa" style="width: 100%; height: 400px;"></div>
-    </section>
-    
-    <script src="script.js"></script>
+
+    <script>
+        async function cargarViajesDisponibles() {
+            try {
+                const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes-disponibles");
+                const viajes = await res.json();
+                const lista = document.getElementById("lista-viajes");
+                lista.innerHTML = "";
+
+                viajes.forEach(viaje => {
+                    const item = document.createElement("li");
+                    item.innerHTML = `
+                        <strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}<br>
+                        <strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}<br>
+                        <button onclick="aceptarViaje(${viaje.id})">Aceptar</button>
+                        <hr>
+                    `;
+                    lista.appendChild(item);
+                });
+            } catch (err) {
+                console.error("Error al cargar viajes:", err);
+            }
+        }
+
+        async function aceptarViaje(idViaje) {
+            try {
+                const res = await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${idViaje}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ estado: "aceptado", conductor_id: 2 }) // ID conductor fijo para pruebas
+                });
+
+                const data = await res.json();
+                alert("Viaje aceptado ✅");
+                console.log("Viaje actualizado:", data);
+                cargarViajesDisponibles();
+            } catch (err) {
+                console.error("Error al aceptar viaje:", err);
+            }
+        }
+
+        document.getElementById("logout").addEventListener("click", () => {
+            window.location.href = "index.html";
+        });
+
+        cargarViajesDisponibles();
+    </script>
 </body>
 </html>

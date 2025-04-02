@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inicio de Sesión - MotoTaxi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Iniciar Sesión</h2>
+    <form id="loginForm">
+      <label for="telefono">Número de Teléfono:</label>
+      <input type="tel" id="telefono" name="telefono" required />
+
+      <label for="password">Contraseña:</label>
+      <input type="password" id="password" name="password" required />
+
+      <button type="submit">Ingresar</button>
+    </form>
+
+    <p>¿No tienes cuenta? <a href="registro_cliente.html">Regístrate como cliente</a></p>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const loginForm = document.getElementById("loginForm");
+
+      loginForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const telefono = document.getElementById("telefono").value;
+        const password = document.getElementById("password").value;
+
+        try {
+          const res = await fetch("https://mototaxi-api-production.up.railway.app/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ telefono, password })
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            alert("Bienvenido " + data.user.nombre);
+            const tipo = data.user.tipo;
+
+            if (tipo === "admin") window.location.href = "admin.html";
+            else if (tipo === "conductor") window.location.href = "conductor.html";
+            else window.location.href = "solicitud-viaje.html";
+
+          } else {
+            alert("Error: " + data.error);
+          }
+        } catch (err) {
+          console.error("Error en login:", err);
+          alert("No se pudo iniciar sesión.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
