@@ -51,7 +51,7 @@
 </head>
 <body>
 <div class="container">
-  <h2>📦 Viajes Disponibles</h2>
+  <h2>🛵 Viajes Disponibles</h2>
   <div id="pedidos"></div>
 </div>
 <script>
@@ -65,7 +65,7 @@ async function cargarPedidos() {
   const disponibles = pedidos.filter(p => !p.chofer && p.estado === 'pendiente');
 
   if (disponibles.length === 0) {
-    contenedor.innerHTML = '<p style="text-align:center">No hay pedidos disponibles.</p>';
+    contenedor.innerHTML = '<p style="text-align:center">No hay viajes disponibles.</p>';
     return;
   }
 
@@ -73,9 +73,9 @@ async function cargarPedidos() {
     const div = document.createElement("div");
     div.className = "card";
     div.innerHTML = `
-      <strong>Chofer:</strong> ${p.cliente}<br>
-      <strong>Cantidad:</strong> ${p.cantidad} usuarios<br>
-      <button class="verde" onclick="aceptarViaje(${p.id})">✅ Aceptar Viaje</button>
+      <strong>Origen:</strong> ${p.origen}<br>
+      <strong>Destino:</strong> ${p.destino}<br>
+      <button class="verde" onclick="aceptarViaje(${p.id})">🚖 Aceptar Viaje</button>
     `;
     contenedor.appendChild(div);
   });
