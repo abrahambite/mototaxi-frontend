@@ -3,93 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Conductor</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Panel del Conductor</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
-    h2 { text-align: center; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    th, td { padding: 12px; border: 1px solid #ccc; text-align: center; }
-    th { background-color: #007bff; color: white; }
-    button { padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button.finalizar { background: #dc3545; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f2f5;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 30px;
+    }
+    h2 {
+      text-align: center;
+      color: #007bff;
+    }
+    .card {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    .verde { background-color: #28a745; color: white; }
+    .gris { background-color: #6c757d; color: white; }
+    .rojo { background-color: #dc3545; color: white; }
+    .map {
+      width: 100%;
+      height: 250px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <h2>🛵 Panel del Conductor</h2>
-  <p style="text-align:center;">Viajes disponibles, aceptados y finalizados</p>
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Origen</th>
-        <th>Destino</th>
-        <th>Estado</th>
-        <th>Acción</th>
-      </tr>
-    </thead>
-    <tbody id="tabla-conductor"></tbody>
-  </table>
+<div class="container">
+  <h2>📦 Viajes Disponibles</h2>
+  <div id="pedidos"></div>
+</div>
+<script>
+const usuario = localStorage.getItem("usuario")?.toLowerCase()?.trim();
 
-  <script>
-    async function cargarViajes() {
-      const tabla = document.getElementById("tabla-conductor");
-      tabla.innerHTML = "<tr><td colspan='5'>Cargando viajes...</td></tr>";
+async function cargarPedidos() {
+  const res = await fetch("https://yago.digital/api/pedidos");
+  const pedidos = await res.json();
+  const contenedor = document.getElementById("pedidos");
+  contenedor.innerHTML = "";
+  const disponibles = pedidos.filter(p => !p.chofer && p.estado === 'pendiente');
 
-      try {
-        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
-        const viajes = await res.json();
+  if (disponibles.length === 0) {
+    contenedor.innerHTML = '<p style="text-align:center">No hay pedidos disponibles.</p>';
+    return;
+  }
 
-        tabla.innerHTML = "";
-        viajes.forEach((v, i) => {
-          const asignado = v.conductor_id === 2; // ID fijo de conductor
+  disponibles.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <strong>Cliente:</strong> ${p.cliente}<br>
+      <strong>Cantidad:</strong> ${p.cantidad} garrafones<br>
+      <button class="verde" onclick="aceptarViaje(${p.id})">✅ Aceptar Viaje</button>
+    `;
+    contenedor.appendChild(div);
+  });
+}
 
-          let accion = "";
-          if (v.estado === "pendiente") {
-            accion = `<button onclick='aceptar(${v.id})'>Aceptar</button>`;
-          } else if (asignado && v.estado === "aceptado") {
-            accion = `<button class='finalizar' onclick='finalizar(${v.id})'>Finalizar</button>`;
-          } else if (v.estado === "finalizado") {
-            accion = "✔️ Completado";
-          } else {
-            accion = "-";
-          }
+async function aceptarViaje(id) {
+  const res = await fetch("https://yago.digital/api/aceptar-viaje", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ viajeId: id, chofer: usuario })
+  });
+  const data = await res.json();
+  alert(data.mensaje || "Viaje asignado");
+  window.location.href = "seguimiento_chofer.html";
+}
 
-          tabla.innerHTML += `
-            <tr>
-              <td>${v.id}</td>
-              <td>${v.origen?.lat ?? "-"}</td>
-              <td>${v.destino?.lat ?? "-"}</td>
-              <td>${v.estado}</td>
-              <td>${accion}</td>
-            </tr>
-          `;
-        });
-      } catch (err) {
-        tabla.innerHTML = "<tr><td colspan='5'>Error al cargar viajes.</td></tr>";
-        console.error(err);
-      }
-    }
-
-    async function aceptar(id) {
-      await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: "aceptado", conductor_id: 2 })
-      });
-      cargarViajes();
-    }
-
-    async function finalizar(id) {
-      await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: "finalizado" })
-      });
-      cargarViajes();
-    }
-
-    cargarViajes();
-  </script>
+cargarPedidos();
+</script>
 </body>
 </html>
