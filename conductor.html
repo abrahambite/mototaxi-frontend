@@ -1,108 +1,114 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panel del Conductor</title>
+  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
+      background-color: #f2f2f2;
+      font-family: Arial, sans-serif;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f0f2f5;
+      padding: 0;
     }
     .container {
-      max-width: 500px;
-      margin: auto;
+      max-width: 600px;
+      margin: 30px auto;
       padding: 20px;
-      background: white;
+      background-color: white;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-top: 30px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .viaje {
+      background-color: #e9f5ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .viaje strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #007bff;
+    }
+    .btn {
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      color: white;
+      background-color: #28a745;
+      cursor: pointer;
+    }
+    .btn:disabled {
+      background-color: gray;
     }
     h2 {
       text-align: center;
-      color: #007bff;
-    }
-    .card {
-      background: #f8f9fa;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    .verde { background-color: #28a745; color: white; }
-    .gris { background-color: #6c757d; color: white; }
-    .rojo { background-color: #dc3545; color: white; }
-    .map {
-      width: 100%;
-      height: 250px;
-      border-radius: 8px;
-      margin-top: 10px;
+      color: #0056b3;
     }
   </style>
 </head>
 <body>
-<div class="container">
-  <h2>🛵 Viajes Disponibles</h2>
-  <div id="pedidos"></div>
-</div>
-<script>
-const usuario = localStorage.getItem("usuario")?.toLowerCase()?.trim();
+  <div class="container">
+    <h2>🛵 Viajes Disponibles</h2>
+    <div id="viajes"></div>
+  </div>
 
-async function cargarPedidos() {
-  try {
-    const res = await fetch("https://yago.digital/api/viajes");
-    const pedidos = await res.json();
-    const contenedor = document.getElementById("pedidos");
-    contenedor.innerHTML = "";
-    const disponibles = pedidos.filter(p => !p.conductor_id && p.estado === 'pendiente');
+  <script>
+    const choferId = localStorage.getItem("usuario") || prompt("Ingresa tu nombre de chofer:");
+    if (choferId) localStorage.setItem("usuario", choferId);
 
-    if (disponibles.length === 0) {
-      contenedor.innerHTML = '<p style="text-align:center">No hay viajes disponibles.</p>';
-      return;
+    async function cargarViajes() {
+      try {
+        const res = await fetch("https://yago.digital/api/viajes");
+        const viajes = await res.json();
+        const disponibles = viajes.filter(v => !v.chofer);
+
+        const contenedor = document.getElementById("viajes");
+        contenedor.innerHTML = "";
+
+        if (!disponibles.length) {
+          contenedor.innerHTML = "<p>No hay viajes disponibles en este momento.</p>";
+          return;
+        }
+
+        disponibles.forEach(viaje => {
+          const div = document.createElement("div");
+          div.className = "viaje";
+          div.innerHTML = `
+            <strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}
+            <strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}
+            <button class="btn" onclick="aceptarViaje(${viaje.id})">🚖 Aceptar Viaje</button>
+          `;
+          contenedor.appendChild(div);
+        });
+      } catch (err) {
+        alert("Hubo un error al cargar los viajes disponibles.");
+        console.error(err);
+      }
     }
 
-    disponibles.forEach(p => {
-      const div = document.createElement("div");
-      div.className = "card";
-      div.innerHTML = `
-        <strong>Origen:</strong> ${p.origen?.nombre || 'N/A'}<br>
-        <strong>Destino:</strong> ${p.destino?.nombre || 'N/A'}<br>
-        <button class="verde" onclick="aceptarViaje(${p.id})">🚖 Aceptar Viaje</button>
-      `;
-      contenedor.appendChild(div);
-    });
-  } catch (error) {
-    console.error("Error cargando viajes:", error);
-    alert("Hubo un error al cargar los viajes disponibles.");
-  }
-}
+    async function aceptarViaje(viajeId) {
+      try {
+        await fetch("https://yago.digital/api/aceptar-viaje", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ viajeId, chofer: choferId })
+        });
 
-async function aceptarViaje(id) {
-  try {
-    const res = await fetch("https://yago.digital/api/viajes/" + id + "/aceptar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conductor: usuario })
-    });
-    const data = await res.json();
-    alert(data.mensaje || "Viaje asignado exitosamente");
-    window.location.href = "seguimiento_chofer.html";
-  } catch (error) {
-    console.error("Error al aceptar el viaje:", error);
-    alert("No se pudo aceptar el viaje. Intenta más tarde.");
-  }
-}
+        // Redirigir a la pantalla de seguimiento real
+        window.location.href = `seguimiento.html?viaje=${viajeId}`;
+      } catch (err) {
+        alert("No se pudo aceptar el viaje.");
+        console.error(err);
+      }
+    }
 
-cargarPedidos();
-</script>
+    cargarViajes();
+    setInterval(cargarViajes, 15000); // recarga cada 15 seg
+  </script>
 </body>
 </html>
