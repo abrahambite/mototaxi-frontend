@@ -4,111 +4,106 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panel del Conductor</title>
-  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
-      background-color: #f2f2f2;
       font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
       margin: 0;
-      padding: 0;
+      padding: 20px;
     }
     .container {
       max-width: 600px;
-      margin: 30px auto;
+      margin: auto;
+      background: white;
       padding: 20px;
-      background-color: white;
       border-radius: 10px;
       box-shadow: 0 0 10px #ccc;
     }
-    .viaje {
-      background-color: #e9f5ff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .viaje strong {
-      display: block;
-      margin-bottom: 5px;
-      color: #007bff;
-    }
-    .btn {
-      padding: 10px;
-      margin-top: 10px;
-      width: 100%;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      color: white;
-      background-color: #28a745;
-      cursor: pointer;
-    }
-    .btn:disabled {
-      background-color: gray;
-    }
     h2 {
       text-align: center;
-      color: #0056b3;
+      color: #007bff;
+    }
+    .card {
+      background: #f9f9f9;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #218838;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>🛵 Viajes Disponibles</h2>
-    <div id="viajes"></div>
+    <div id="viajesContainer">Cargando viajes...</div>
   </div>
 
   <script>
-    const choferId = localStorage.getItem("usuario") || prompt("Ingresa tu nombre de chofer:");
-    if (choferId) localStorage.setItem("usuario", choferId);
+    const API_URL = "https://mototaxi-api-production.up.railway.app"; // URL real de tu backend
+    const viajesContainer = document.getElementById("viajesContainer");
 
     async function cargarViajes() {
       try {
-        const res = await fetch("https://yago.digital/api/viajes");
+        const res = await fetch(`${API_URL}/viajes`);
         const viajes = await res.json();
-        const disponibles = viajes.filter(v => !v.chofer);
 
-        const contenedor = document.getElementById("viajes");
-        contenedor.innerHTML = "";
+        const disponibles = viajes.filter(v => v.estado === "pendiente");
 
-        if (!disponibles.length) {
-          contenedor.innerHTML = "<p>No hay viajes disponibles en este momento.</p>";
+        if (disponibles.length === 0) {
+          viajesContainer.innerHTML = "<p>No hay viajes disponibles.</p>";
           return;
         }
 
+        viajesContainer.innerHTML = "";
+
         disponibles.forEach(viaje => {
-          const div = document.createElement("div");
-          div.className = "viaje";
-          div.innerHTML = `
-            <strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}
-            <strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <p><strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}</p>
+            <p><strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}</p>
             <button class="btn" onclick="aceptarViaje(${viaje.id})">🚖 Aceptar Viaje</button>
           `;
-          contenedor.appendChild(div);
+          viajesContainer.appendChild(card);
         });
-      } catch (err) {
+      } catch (error) {
+        console.error("Error al cargar viajes:", error);
         alert("Hubo un error al cargar los viajes disponibles.");
-        console.error(err);
       }
     }
 
-    async function aceptarViaje(viajeId) {
+    async function aceptarViaje(id) {
       try {
-        await fetch("https://yago.digital/api/aceptar-viaje", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ viajeId, chofer: choferId })
-        });
+        // Aquí puedes hacer un PATCH si deseas registrar la aceptación en el backend
+        // Ejemplo (opcional):
+        // await fetch(`${API_URL}/viajes/${id}`, {
+        //   method: "PATCH",
+        //   headers: { "Content-Type": "application/json" },
+        //   body: JSON.stringify({ estado: "enRuta", conductor_id: 2 }) // ID simulado
+        // });
 
-        // Redirigir a la pantalla de seguimiento real
-        window.location.href = `seguimiento.html?viaje=${viajeId}`;
-      } catch (err) {
+        // Redirigir al seguimiento con el ID
+        window.location.href = `seguimiento.html?viaje=${id}`;
+      } catch (error) {
+        console.error("Error al aceptar el viaje:", error);
         alert("No se pudo aceptar el viaje.");
-        console.error(err);
       }
     }
 
     cargarViajes();
-    setInterval(cargarViajes, 15000); // recarga cada 15 seg
   </script>
 </body>
 </html>
