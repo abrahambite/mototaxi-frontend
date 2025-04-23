@@ -58,38 +58,48 @@
 const usuario = localStorage.getItem("usuario")?.toLowerCase()?.trim();
 
 async function cargarPedidos() {
-  const res = await fetch("https://yago.digital/api/pedidos");
-  const pedidos = await res.json();
-  const contenedor = document.getElementById("pedidos");
-  contenedor.innerHTML = "";
-  const disponibles = pedidos.filter(p => !p.chofer && p.estado === 'pendiente');
+  try {
+    const res = await fetch("https://yago.digital/api/viajes");
+    const pedidos = await res.json();
+    const contenedor = document.getElementById("pedidos");
+    contenedor.innerHTML = "";
+    const disponibles = pedidos.filter(p => !p.conductor_id && p.estado === 'pendiente');
 
-  if (disponibles.length === 0) {
-    contenedor.innerHTML = '<p style="text-align:center">No hay viajes disponibles.</p>';
-    return;
+    if (disponibles.length === 0) {
+      contenedor.innerHTML = '<p style="text-align:center">No hay viajes disponibles.</p>';
+      return;
+    }
+
+    disponibles.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `
+        <strong>Origen:</strong> ${p.origen?.nombre || 'N/A'}<br>
+        <strong>Destino:</strong> ${p.destino?.nombre || 'N/A'}<br>
+        <button class="verde" onclick="aceptarViaje(${p.id})">🚖 Aceptar Viaje</button>
+      `;
+      contenedor.appendChild(div);
+    });
+  } catch (error) {
+    console.error("Error cargando viajes:", error);
+    alert("Hubo un error al cargar los viajes disponibles.");
   }
-
-  disponibles.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <strong>Origen:</strong> ${p.origen}<br>
-      <strong>Destino:</strong> ${p.destino}<br>
-      <button class="verde" onclick="aceptarViaje(${p.id})">🚖 Aceptar Viaje</button>
-    `;
-    contenedor.appendChild(div);
-  });
 }
 
 async function aceptarViaje(id) {
-  const res = await fetch("https://yago.digital/api/aceptar-viaje", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ viajeId: id, chofer: usuario })
-  });
-  const data = await res.json();
-  alert(data.mensaje || "Viaje asignado");
-  window.location.href = "seguimiento_chofer.html";
+  try {
+    const res = await fetch("https://yago.digital/api/viajes/" + id + "/aceptar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conductor: usuario })
+    });
+    const data = await res.json();
+    alert(data.mensaje || "Viaje asignado exitosamente");
+    window.location.href = "seguimiento_chofer.html";
+  } catch (error) {
+    console.error("Error al aceptar el viaje:", error);
+    alert("No se pudo aceptar el viaje. Intenta más tarde.");
+  }
 }
 
 cargarPedidos();
