@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,91 +20,76 @@
       border-radius: 10px;
       box-shadow: 0 0 10px #ccc;
     }
-    h2 {
-      text-align: center;
-      color: #007bff;
-    }
-    .card {
-      background: #f9f9f9;
+    .viaje-card {
+      background: #e6f2ff;
       padding: 15px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       border-radius: 8px;
+      border-left: 5px solid #007bff;
     }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
+    button {
+      padding: 10px;
       font-size: 16px;
       background-color: #28a745;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
-    }
-    .btn:hover {
-      background-color: #218838;
+      width: 100%;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>🛵 Viajes Disponibles</h2>
-    <div id="viajesContainer">Cargando viajes...</div>
+    <div id="viajes"></div>
   </div>
 
   <script>
-    const API_URL = "https://mototaxi-api-production.up.railway.app"; // URL real de tu backend
-    const viajesContainer = document.getElementById("viajesContainer");
+    document.addEventListener("DOMContentLoaded", async function () {
+      const contenedor = document.getElementById("viajes");
 
-    async function cargarViajes() {
       try {
-        const res = await fetch(`${API_URL}/viajes`);
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes-disponibles");
         const viajes = await res.json();
 
-        const disponibles = viajes.filter(v => v.estado === "pendiente");
-
-        if (disponibles.length === 0) {
-          viajesContainer.innerHTML = "<p>No hay viajes disponibles.</p>";
+        if (!viajes.length) {
+          contenedor.innerHTML = "<p>No hay viajes disponibles en este momento.</p>";
           return;
         }
 
-        viajesContainer.innerHTML = "";
+        viajes.forEach(viaje => {
+          const div = document.createElement("div");
+          div.classList.add("viaje-card");
 
-        disponibles.forEach(viaje => {
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
+          div.innerHTML = `
             <p><strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}</p>
             <p><strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}</p>
-            <button class="btn" onclick="aceptarViaje(${viaje.id})">🚖 Aceptar Viaje</button>
+            <button onclick="aceptarViaje(${viaje.id})">🚖 Aceptar Viaje</button>
           `;
-          viajesContainer.appendChild(card);
+
+          contenedor.appendChild(div);
         });
-      } catch (error) {
-        console.error("Error al cargar viajes:", error);
+      } catch (err) {
+        console.error(err);
         alert("Hubo un error al cargar los viajes disponibles.");
       }
+    });
+
+    function aceptarViaje(id) {
+      const conductorId = localStorage.getItem("user_id") || 2;
+      fetch(\`https://mototaxi-api-production.up.railway.app/viajes/\${id}\`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conductor_id: parseInt(conductorId), estado: "en_ruta" })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert("Viaje aceptado ✅");
+          window.location.href = \`seguimiento.html?viaje=\${id}\`;
+        })
+        .catch(err => console.error("Error al aceptar viaje", err));
     }
-
-    async function aceptarViaje(id) {
-      try {
-        // Aquí puedes hacer un PATCH si deseas registrar la aceptación en el backend
-        // Ejemplo (opcional):
-        // await fetch(`${API_URL}/viajes/${id}`, {
-        //   method: "PATCH",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify({ estado: "enRuta", conductor_id: 2 }) // ID simulado
-        // });
-
-        // Redirigir al seguimiento con el ID
-        window.location.href = `seguimiento.html?viaje=${id}`;
-      } catch (error) {
-        console.error("Error al aceptar el viaje:", error);
-        alert("No se pudo aceptar el viaje.");
-      }
-    }
-
-    cargarViajes();
   </script>
 </body>
 </html>
