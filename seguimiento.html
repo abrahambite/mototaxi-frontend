@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Seguimiento - MotoTaxi</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,86 +13,84 @@
 
     <div id="map" style="width: 100%; height: 400px; margin-bottom: 15px;"></div>
 
-    <div id="choferInfo" style="margin-bottom: 10px; font-size: 16px;">
-      Cargando información del viaje...
-    </div>
+    <div id="detallesViaje" style="margin-top: 10px;"></div>
 
-    <button id="cancelarViaje" style="background-color: crimson; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
+    <button onclick="cancelarViaje()" style="background-color: crimson; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
       Cancelar Viaje
     </button>
   </div>
 
   <script>
-    const viajeId = new URLSearchParams(window.location.search).get("viaje");
-    const choferInfo = document.getElementById("choferInfo");
-    let map, markerCliente, markerChofer, ruta;
+    const API_URL = "https://mototaxi-api-production.up.railway.app";
+    let map, directionsRenderer;
 
-    if (!viajeId) {
-      choferInfo.innerText = "Error: No se proporcionó ID de viaje.";
-    } else {
-      fetch(`https://yago.digital/api/viajes/${viajeId}`)
-        .then(res => res.json())
-        .then(viaje => {
-          choferInfo.innerHTML = `
-            👤 <strong>Chofer:</strong> ${viaje.chofer?.nombre || "No asignado"}<br>
-            🏍️ <strong>Unidad:</strong> ${viaje.chofer?.vehiculo || "N/A"}<br>
-            📞 <strong>Contacto:</strong> ${viaje.chofer?.telefono || "N/A"}
-          `;
-
-          initMap(viaje);
-        })
-        .catch(err => {
-          choferInfo.innerText = "No se pudo cargar el viaje.";
-          console.error(err);
-        });
+    function getViajeId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("viaje");
     }
 
-    function initMap(viaje) {
+    async function obtenerViaje() {
+      try {
+        const res = await fetch(`${API_URL}/viajes`);
+        const viajes = await res.json();
+        const id = getViajeId();
+
+        const viaje = viajes.find(v => v.id == id);
+        if (!viaje) {
+          alert("No se encontró el viaje.");
+          return;
+        }
+
+        mostrarMapa(viaje.origen, viaje.destino);
+        mostrarDetalles(viaje);
+      } catch (err) {
+        console.error("Error al obtener viaje:", err);
+        alert("Error al cargar el viaje.");
+      }
+    }
+
+    function mostrarDetalles(viaje) {
+      const contenedor = document.getElementById("detallesViaje");
+      contenedor.innerHTML = `
+        <p><strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}</p>
+        <p><strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}</p>
+        <p><strong>Estado:</strong> ${viaje.estado}</p>
+      `;
+    }
+
+    function mostrarMapa(origen, destino) {
       map = new google.maps.Map(document.getElementById("map"), {
-        center: viaje.destino,
         zoom: 14,
+        center: origen
       });
 
-      markerCliente = new google.maps.Marker({
-        position: viaje.destino,
-        map,
-        label: "Destino",
-        icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-      });
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setMap(map);
 
-      markerChofer = new google.maps.Marker({
-        map,
-        label: "Moto",
-        icon: "http://maps.google.com/mapfiles/ms/icons/motorcycling.png"
-      });
+      const directionsService = new google.maps.DirectionsService();
 
-      actualizarUbicacionChofer(viaje.chofer?.id);
-      setInterval(() => actualizarUbicacionChofer(viaje.chofer?.id), 8000);
+      directionsService.route({
+        origin: origen,
+        destination: destino,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (result, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(result);
+        } else {
+          console.error("Error al trazar ruta:", status);
+        }
+      });
     }
 
-    function actualizarUbicacionChofer(choferId) {
-      if (!choferId) return;
-
-      fetch(`https://yago.digital/api/ubicacion/${choferId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data || !data.lat || !data.lng) return;
-          const posicion = { lat: data.lat, lng: data.lng };
-          markerChofer.setPosition(posicion);
-          map.panTo(posicion);
-        })
-        .catch(console.error);
-    }
-
-    document.getElementById("cancelarViaje").onclick = () => {
-      alert("Viaje cancelado. Regresando...");
+    function cancelarViaje() {
+      alert("El viaje ha sido cancelado.");
       window.location.href = "solicitud-viaje.html";
-    };
+    }
+
+    obtenerViaje();
   </script>
 
-  <!-- API de Google Maps -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI">
-  </script>
+  <!-- Google Maps API -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI"></script>
 </body>
 </html>
