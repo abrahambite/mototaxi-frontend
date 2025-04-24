@@ -10,15 +10,12 @@
   <div class="container">
     <img src="img/logo.jpeg" alt="Logo MotoTaxi" style="max-width: 150px; margin: 10px auto; display: block;" />
     <h2>Tu unidad viene en camino 🛵</h2>
-
     <div id="map" style="width: 100%; height: 400px; margin-bottom: 15px;"></div>
-
     <div id="choferInfo" style="margin-bottom: 10px;">
       👤 <strong>Chofer:</strong> Cargando...<br>
       🏍️ <strong>Unidad:</strong> Cargando...<br>
       📞 <strong>Contacto:</strong> Cargando...
     </div>
-
     <button id="cancelarViaje" style="background-color: crimson; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
       Cancelar Viaje
     </button>
@@ -28,65 +25,38 @@
     const urlParams = new URLSearchParams(window.location.search);
     const viajeId = urlParams.get("viaje");
 
-    async function init() {
+    async function cargarViaje() {
       try {
-        const res = await fetch(`https://mototaxi-api-production.up.railway.app/viajes`);
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
         const viajes = await res.json();
         const viaje = viajes.find(v => v.id == viajeId);
-
-        if (!viaje) {
-          alert("No se encontró el viaje.");
-          return;
-        }
-
-        const usuariosRes = await fetch(`https://mototaxi-api-production.up.railway.app/usuarios`);
+        if (!viaje) throw new Error("No se encontró el viaje.");
+        const usuariosRes = await fetch("https://mototaxi-api-production.up.railway.app/usuarios");
         const usuarios = await usuariosRes.json();
         const chofer = usuarios.find(u => u.id == viaje.conductor_id);
-
-        // Mostrar datos del conductor
-        const choferInfo = document.getElementById("choferInfo");
-        choferInfo.innerHTML = `
-          👤 <strong>Chofer:</strong> ${chofer?.nombre || "No identificado"}<br>
-          🏍️ <strong>Unidad:</strong> ${chofer?.vehiculo || "Sin datos"}<br>
-          📞 <strong>Contacto:</strong> ${chofer?.telefono || "N/A"}
+        document.getElementById("choferInfo").innerHTML = `
+          👤 <strong>Chofer:</strong> ${chofer?.nombre || "No asignado"}<br>
+          🏍️ <strong>Unidad:</strong> ${chofer?.vehiculo || "N/A"}<br>
+          📞 <strong>Contacto:</strong> ${chofer?.telefono || "No disponible"}
         `;
-
-        // Mapa
         const map = new google.maps.Map(document.getElementById("map"), {
-          center: viaje.origen,
-          zoom: 14
+          zoom: 14,
+          center: viaje.origen
         });
-
-        new google.maps.Marker({
-          position: viaje.origen,
-          map: map,
-          label: "Inicio",
-          icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-        });
-
-        new google.maps.Marker({
-          position: viaje.destino,
-          map: map,
-          label: "Destino",
-          icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-        });
-
-      } catch (error) {
-        console.error("Error al cargar el seguimiento:", error);
-        alert("Ocurrió un error al cargar el seguimiento.");
+        new google.maps.Marker({ position: viaje.origen, map: map, label: "A" });
+        new google.maps.Marker({ position: viaje.destino, map: map, label: "B" });
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Error al cargar el viaje.");
       }
     }
 
-    init();
-
-    document.getElementById("cancelarViaje").addEventListener("click", () => {
-      alert("El viaje ha sido cancelado.");
+    document.getElementById("cancelarViaje").onclick = () => {
       window.location.href = "solicitud-viaje.html";
-    });
-  </script>
+    };
 
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&callback=init">
+    cargarViaje();
   </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI"></script>
 </body>
 </html>
