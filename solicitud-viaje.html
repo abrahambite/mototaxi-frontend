@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solicitar Viaje - MotoTaxi</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
     <h2>Solicitar un Viaje</h2>
-    <form id="solicitudViaje">
+    <form id="formularioRuta">
       <label for="destino">Destino:</label>
       <input type="text" id="destino" name="destino" placeholder="Ingresa tu destino" required />
 
@@ -19,15 +19,16 @@
         <label><input type="radio" name="pago" value="tarjeta" /> Tarjeta</label>
       </div>
 
-      <button type="submit">Solicitar Viaje</button>
+      <button type="submit">Calcular Ruta</button>
     </form>
 
-    <h3>Ruta</h3>
-    <div id="map" style="width: 100%; height: 300px;"></div>
-    <p id="estadoRuta">Esperando coordenadas...</p>
+    <div id="map" style="width: 100%; height: 300px; margin-top: 20px;"></div>
+    <p id="infoRuta"></p>
+    <button id="confirmarViaje" style="display:none; margin-top: 15px;">✅ Confirmar Viaje</button>
   </div>
 
   <script>
+    let map, directionsService, directionsRenderer;
     let origenCoords = null;
     let destinoCoords = null;
 
@@ -37,15 +38,76 @@
       window.location.href = "login.html";
     }
 
-    document.getElementById("solicitudViaje").addEventListener("submit", async function (event) {
-      event.preventDefault();
-      const metodoPago = document.querySelector("input[name='pago']:checked").value;
-      const destinoInput = document.getElementById("destino").value;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: { lat: 32.6245, lng: -115.4521 }
+      });
 
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setMap(map);
+
+      const inputDestino = document.getElementById("destino");
+      const autocomplete = new google.maps.places.Autocomplete(inputDestino);
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          destinoCoords = {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng()
+          };
+        }
+      });
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          origenCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          new google.maps.Marker({ position: origenCoords, map, label: "Tú" });
+          map.setCenter(origenCoords);
+        }, () => {
+          alert("No se pudo obtener tu ubicación.");
+        });
+      }
+    }
+
+    document.getElementById("formularioRuta").addEventListener("submit", function (e) {
+      e.preventDefault();
       if (!origenCoords || !destinoCoords) {
-        alert("Las coordenadas de origen o destino no están listas.");
+        alert("Ubicación de origen o destino no válida.");
         return;
       }
+
+      const request = {
+        origin: origenCoords,
+        destination: destinoCoords,
+        travelMode: google.maps.TravelMode.DRIVING
+      };
+
+      directionsService.route(request, function (result, status) {
+        if (status === google.maps.DirectionsStatus.OK) {
+          directionsRenderer.setDirections(result);
+          const tiempo = result.routes[0].legs[0].duration.text;
+          const distanciaKm = result.routes[0].legs[0].distance.value / 1000;
+          const costo = (distanciaKm * 10).toFixed(2);
+
+          document.getElementById("infoRuta").innerHTML = `
+            🕒 Tiempo estimado: <strong>${tiempo}</strong><br>
+            📏 Distancia: <strong>${distanciaKm.toFixed(2)} km</strong><br>
+            💵 Costo aproximado: <strong>$${costo} MXN</strong>
+          `;
+          document.getElementById("confirmarViaje").style.display = "block";
+        } else {
+          alert("No se pudo calcular la ruta. Intenta con otra dirección.");
+        }
+      });
+    });
+
+    document.getElementById("confirmarViaje").addEventListener("click", async () => {
+      const metodoPago = document.querySelector("input[name='pago']:checked").value;
 
       const viaje = {
         pasajero_id: parseInt(pasajeroId),
@@ -63,53 +125,17 @@
 
         const data = await res.json();
         if (!res.ok) {
-          alert("Error al solicitar el viaje: " + data.error);
+          alert("Error al crear el viaje: " + data.error);
           return;
         }
 
-        alert("🚕 Viaje solicitado con éxito.");
+        alert("🚕 Viaje solicitado exitosamente.");
         window.location.href = "seguimiento.html?viaje=" + data.viaje.id;
       } catch (err) {
-        console.error("Error al guardar el viaje:", err);
-        alert("Error al guardar el viaje.");
+        console.error("Error:", err);
+        alert("No se pudo completar la solicitud de viaje.");
       }
     });
-
-    function initMap() {
-      const map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 32.6245, lng: -115.4521 },
-        zoom: 14
-      });
-
-      const destinoInput = document.getElementById("destino");
-      const autocomplete = new google.maps.places.Autocomplete(destinoInput);
-
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
-        if (!place.geometry) {
-          alert("Por favor selecciona una dirección válida del autocompletado.");
-          return;
-        }
-        destinoCoords = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng()
-        };
-      });
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          origenCoords = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
-          new google.maps.Marker({ position: origenCoords, map, label: "Tú" });
-          map.setCenter(origenCoords);
-          document.getElementById("estadoRuta").innerText = `Tu ubicación actual: ${origenCoords.lat}, ${origenCoords.lng}`;
-        }, () => {
-          alert("No se pudo obtener tu ubicación actual.");
-        });
-      }
-    }
   </script>
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&libraries=places&callback=initMap"></script>
 </body>
