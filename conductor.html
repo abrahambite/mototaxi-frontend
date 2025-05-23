@@ -1,56 +1,89 @@
-<script>
-  const choferId = localStorage.getItem("user_id");
-
-  async function cargarViajes() {
-    try {
-      const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
-      const viajes = await res.json();
-      const contenedor = document.getElementById("lista-viajes");
-      contenedor.innerHTML = "";
-
-      const pendientes = viajes.filter(v => v.estado === "pendiente" && !v.conductor_id);
-
-      if (!pendientes.length) {
-        contenedor.innerHTML = "<p>No hay viajes disponibles.</p>";
-        return;
-      }
-
-      pendientes.forEach(viaje => {
-        const div = document.createElement("div");
-        div.className = "viaje";
-        div.innerHTML = `
-          <strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}<br>
-          <strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}<br><br>
-          <button onclick="aceptarViaje(${viaje.id})">🚕 Aceptar Viaje</button>
-        `;
-        contenedor.appendChild(div);
-      });
-    } catch (err) {
-      alert("Error al cargar los viajes.");
-      console.error(err);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel del Conductor</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .viaje {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
     }
-  }
-
-  async function aceptarViaje(id) {
-    try {
-      const res = await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: "aceptado", conductor_id: choferId })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert("❌ " + data.error);
-        return;
-      }
-
-      window.location.href = `seguimiento_chofer.html?viaje=${id}`;
-    } catch (err) {
-      alert("No se pudo aceptar el viaje.");
-      console.error(err);
+    .viaje button {
+      margin-top: 10px;
     }
-  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🛵 Viajes Disponibles</h2>
+    <div id="lista-viajes"></div>
+  </div>
 
-  cargarViajes();
-</script>
+  <script>
+    const choferId = localStorage.getItem("user_id");
+
+    if (!choferId) {
+      alert("No has iniciado sesión como conductor. Redirigiendo al login.");
+      window.location.href = "login.html";
+    }
+
+    async function cargarViajes() {
+      try {
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        const viajes = await res.json();
+        const contenedor = document.getElementById("lista-viajes");
+        contenedor.innerHTML = "";
+
+        const pendientes = viajes.filter(v => v.estado === "pendiente" && !v.conductor_id);
+
+        if (!pendientes.length) {
+          contenedor.innerHTML = "<p>No hay viajes disponibles.</p>";
+          return;
+        }
+
+        pendientes.forEach(viaje => {
+          const div = document.createElement("div");
+          div.className = "viaje";
+          div.innerHTML = `
+            <strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}<br>
+            <strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}<br><br>
+            <button onclick="aceptarViaje(${viaje.id})">🚕 Aceptar Viaje</button>
+          `;
+          contenedor.appendChild(div);
+        });
+      } catch (err) {
+        alert("Error al cargar los viajes.");
+        console.error(err);
+      }
+    }
+
+    async function aceptarViaje(id) {
+      try {
+        const res = await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ estado: "aceptado", conductor_id: choferId })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert("❌ " + data.error);
+          return;
+        }
+
+        window.location.href = `seguimiento_chofer.html?viaje=${id}`;
+      } catch (err) {
+        alert("No se pudo aceptar el viaje.");
+        console.error(err);
+      }
+    }
+
+    cargarViajes();
+  </script>
+</body>
+</html>
