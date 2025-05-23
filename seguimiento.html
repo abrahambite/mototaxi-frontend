@@ -2,23 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Seguimiento - MotoTaxi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seguimiento del Viaje</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
-    <img src="img/logo.jpeg" alt="Logo MotoTaxi" style="max-width: 150px; margin: 10px auto; display: block;" />
     <h2>Tu unidad viene en camino 🛵</h2>
     <div id="map" style="width: 100%; height: 400px; margin-bottom: 15px;"></div>
     <div id="choferInfo" style="margin-bottom: 10px;">
-      👤 <strong>Chofer:</strong> Cargando...<br>
-      🏍️ <strong>Unidad:</strong> Cargando...<br>
-      📞 <strong>Contacto:</strong> Cargando...
+      👤 <strong>Chofer:</strong> <span id="chofer">Cargando...</span><br>
+      🏍️ <strong>Unidad:</strong> <span id="unidad">Cargando...</span><br>
+      📞 <strong>Contacto:</strong> <span id="contacto">Cargando...</span>
     </div>
-    <button id="cancelarViaje" style="background-color: crimson; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
-      Cancelar Viaje
-    </button>
+    <button id="cancelarViaje">Cancelar Viaje</button>
   </div>
 
   <script>
@@ -27,27 +24,34 @@
 
     async function cargarViaje() {
       try {
-        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
-        const viajes = await res.json();
+        const resViajes = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        const viajes = await resViajes.json();
         const viaje = viajes.find(v => v.id == viajeId);
-        if (!viaje) throw new Error("No se encontró el viaje.");
-        const usuariosRes = await fetch("https://mototaxi-api-production.up.railway.app/usuarios");
-        const usuarios = await usuariosRes.json();
-        const chofer = usuarios.find(u => u.id == viaje.conductor_id);
-        document.getElementById("choferInfo").innerHTML = `
-          👤 <strong>Chofer:</strong> ${chofer?.nombre || "No asignado"}<br>
-          🏍️ <strong>Unidad:</strong> ${chofer?.vehiculo || "N/A"}<br>
-          📞 <strong>Contacto:</strong> ${chofer?.telefono || "No disponible"}
-        `;
+
+        if (!viaje) throw new Error("Viaje no encontrado");
+
         const map = new google.maps.Map(document.getElementById("map"), {
           zoom: 14,
           center: viaje.origen
         });
+
         new google.maps.Marker({ position: viaje.origen, map: map, label: "A" });
         new google.maps.Marker({ position: viaje.destino, map: map, label: "B" });
+
+        if (viaje.conductor_id) {
+          const resUsuarios = await fetch("https://mototaxi-api-production.up.railway.app/usuarios");
+          const usuarios = await resUsuarios.json();
+          const chofer = usuarios.find(u => u.id == viaje.conductor_id);
+
+          document.getElementById("chofer").textContent = chofer?.nombre || "No asignado";
+          document.getElementById("unidad").textContent = chofer?.vehiculo || "N/A";
+          document.getElementById("contacto").textContent = chofer?.telefono || "No disponible";
+        } else {
+          document.getElementById("chofer").textContent = "Aún sin asignar";
+        }
       } catch (err) {
-        console.error("Error:", err);
-        alert("Error al cargar el viaje.");
+        console.error("Error al cargar el viaje:", err);
+        alert("No se pudo cargar el viaje.");
       }
     }
 
