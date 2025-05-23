@@ -8,71 +8,91 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 20px;
       background-color: #f0f2f5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
     }
     h2 {
       color: #007bff;
-      margin-top: 20px;
+      margin-bottom: 20px;
     }
     .mapa {
-      width: 90%;
+      width: 100%;
       height: 400px;
-      margin: 20px auto;
+      margin-bottom: 20px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .info-box {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    a.btn {
+      display: inline-block;
+      padding: 12px 25px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-bottom: 20px;
     }
     button {
       width: 90%;
       padding: 15px;
       font-size: 16px;
-      background-color: #28a745;
+      background-color: crimson;
       color: white;
       border: none;
       border-radius: 8px;
-      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
   <h2>🗺️ Seguimiento del Viaje</h2>
+  
+  <div id="viajeInfo" class="info-box">
+    <strong>Destino:</strong> <span id="destinoTexto">Cargando...</span><br><br>
+    <a id="btnGoogleMaps" href="#" target="_blank" class="btn">Abrir en Google Maps</a>
+  </div>
+
   <div id="map" class="mapa"></div>
+
   <button onclick="finalizarViaje()">✅ Finalizar Viaje</button>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA5-NK4WbfDUTSyvRh2DiPoPk9nxcq1mnc&callback=initMap" async defer></script>
+
   <script>
     let map;
     let marcador;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const viajeId = urlParams.get("viaje");
+
     function initMap() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          const ubicacion = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
+      navigator.geolocation.getCurrentPosition(pos => {
+        const ubicacion = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
 
-          map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 15,
-            center: ubicacion
-          });
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 15,
+          center: ubicacion
+        });
 
-          marcador = new google.maps.Marker({
-            position: ubicacion,
-            map,
-            title: "Tu ubicación",
-            icon: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-          });
+        marcador = new google.maps.Marker({
+          position: ubicacion,
+          map,
+          title: "Tu ubicación",
+          icon: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+        });
 
-          // Actualiza ubicación cada 10 segundos
-          setInterval(actualizarUbicacion, 10000);
-        }, () => alert("No se pudo obtener tu ubicación"));
-      } else {
-        alert("Tu navegador no soporta geolocalización");
-      }
+        setInterval(actualizarUbicacion, 10000);
+      }, () => alert("No se pudo obtener tu ubicación"));
     }
 
     function actualizarUbicacion() {
@@ -86,10 +106,31 @@
       });
     }
 
+    async function cargarDestino() {
+      try {
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        const viajes = await res.json();
+        const viaje = viajes.find(v => v.id == viajeId);
+
+        if (!viaje || !viaje.destino) throw new Error("Viaje no encontrado");
+
+        const destinoCoords = viaje.destino;
+        document.getElementById("destinoTexto").innerText = `${destinoCoords.lat}, ${destinoCoords.lng}`;
+        document.getElementById("btnGoogleMaps").href =
+          `https://www.google.com/maps/dir/?api=1&destination=${destinoCoords.lat},${destinoCoords.lng}`;
+
+      } catch (err) {
+        document.getElementById("destinoTexto").innerText = "No disponible";
+        console.error("Error al cargar destino:", err);
+      }
+    }
+
     function finalizarViaje() {
       alert("✅ Viaje finalizado correctamente");
       window.location.href = "conductor.html";
     }
+
+    cargarDestino();
   </script>
 </body>
 </html>
