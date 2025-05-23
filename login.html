@@ -43,18 +43,22 @@
 
           if (res.ok) {
             alert("Bienvenido " + data.user.nombre);
-            const tipo = data.user.tipo;
+            localStorage.setItem("user_id", data.user.id);
+            localStorage.setItem("tipo", data.user.tipo);
 
-            if (tipo === "admin") window.location.href = "admin.html";
-            else if (tipo === "conductor") window.location.href = "conductor.html";
-            else window.location.href = "solicitud-viaje.html";
-
+            if (data.user.tipo === "admin") {
+              window.location.href = "admin.html";
+            } else if (data.user.tipo === "conductor") {
+              window.location.href = "conductor.html";
+            } else {
+              window.location.href = "solicitud-viaje.html";
+            }
           } else {
-            alert("Error: " + data.error);
+            alert("Error: " + (data.error || "Credenciales inválidas"));
           }
         } catch (err) {
           console.error("Error en login:", err);
-          alert("No se pudo iniciar sesión.");
+          alert("No se pudo iniciar sesión. Intenta más tarde.");
         }
       });
     });
