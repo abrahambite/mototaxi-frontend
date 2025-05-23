@@ -25,16 +25,24 @@
   </div>
 
   <script>
-    const choferId = localStorage.getItem("user_id");
+    document.addEventListener("DOMContentLoaded", async function () {
+      const choferId = localStorage.getItem("user_id");
+      const tipo = localStorage.getItem("tipo");
 
-    if (!choferId) {
-      alert("No has iniciado sesión como conductor. Redirigiendo al login.");
-      window.location.href = "login.html";
-    }
+      if (!choferId || tipo !== "conductor") {
+        alert("Debes iniciar sesión como conductor para acceder a esta sección.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      await cargarViajes();
+    });
 
     async function cargarViajes() {
       try {
         const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        if (!res.ok) throw new Error("No se pudo cargar la lista de viajes.");
+
         const viajes = await res.json();
         const contenedor = document.getElementById("lista-viajes");
         contenedor.innerHTML = "";
@@ -42,7 +50,7 @@
         const pendientes = viajes.filter(v => v.estado === "pendiente" && !v.conductor_id);
 
         if (!pendientes.length) {
-          contenedor.innerHTML = "<p>No hay viajes disponibles.</p>";
+          contenedor.innerHTML = "<p>No hay viajes disponibles por el momento.</p>";
           return;
         }
 
@@ -57,12 +65,18 @@
           contenedor.appendChild(div);
         });
       } catch (err) {
-        alert("Error al cargar los viajes.");
         console.error(err);
+        alert("Ocurrió un error al cargar los viajes.");
       }
     }
 
     async function aceptarViaje(id) {
+      const choferId = localStorage.getItem("user_id");
+      if (!choferId) {
+        alert("No se ha detectado el ID del conductor. Inicia sesión de nuevo.");
+        return;
+      }
+
       try {
         const res = await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${id}`, {
           method: "PATCH",
@@ -72,18 +86,17 @@
 
         const data = await res.json();
         if (!res.ok) {
-          alert("❌ " + data.error);
+          alert("❌ " + (data.error || "No se pudo aceptar el viaje"));
           return;
         }
 
+        alert("✅ Viaje aceptado con éxito.");
         window.location.href = `seguimiento_chofer.html?viaje=${id}`;
       } catch (err) {
-        alert("No se pudo aceptar el viaje.");
         console.error(err);
+        alert("Error al intentar aceptar el viaje.");
       }
     }
-
-    cargarViajes();
   </script>
 </body>
 </html>
