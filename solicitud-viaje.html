@@ -1,172 +1,116 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solicitar Viaje - MotoGo</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitar Viaje - MotoTaxi</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <h2>Solicitar un Viaje</h2>
-
     <form id="solicitudViaje">
-      <input type="hidden" id="origen" name="origen" />
-
       <label for="destino">Destino:</label>
       <input type="text" id="destino" name="destino" placeholder="Ingresa tu destino" required />
 
-      <label>M閠odo de Pago:</label>
+      <label>M茅todo de Pago:</label>
       <div class="radio-container">
-        <label class="radio-option selected">
-          <input type="radio" name="pago" value="efectivo" checked /> Efectivo
-        </label>
-        <label class="radio-option">
-          <input type="radio" name="pago" value="tarjeta" /> Tarjeta
-        </label>
+        <label><input type="radio" name="pago" value="efectivo" checked /> Efectivo</label>
+        <label><input type="radio" name="pago" value="tarjeta" /> Tarjeta</label>
       </div>
 
       <button type="submit">Solicitar Viaje</button>
     </form>
 
-    <h3>Ruta en el Mapa</h3>
-    <div id="map" style="width: 100%; height: 400px;"></div>
-
-    <h3>Tiempo Estimado de Viaje</h3>
-    <p id="tiempoEstimado">Ingresa la ruta para calcular el tiempo.</p>
-
-    <button id="confirmarViaje" style="display: none; margin-top: 20px; background-color: #28a745; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer;">
-      Confirmar Viaje
-    </button>
+    <h3>Ruta</h3>
+    <div id="map" style="width: 100%; height: 300px;"></div>
+    <p id="estadoRuta">Esperando coordenadas...</p>
   </div>
 
   <script>
-    let map;
-    let directionsService;
-    let directionsRenderer;
-    let origenCoords;
+    let origenCoords = null;
+    let destinoCoords = null;
 
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 32.6245, lng: -115.4521 },
-        zoom: 14,
-      });
-
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
-
-      new google.maps.places.Autocomplete(document.getElementById("destino"));
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          function (position) {
-            origenCoords = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            };
-
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ location: origenCoords }, function (results, status) {
-              if (status === "OK" && results[0]) {
-                document.getElementById("origen").value = results[0].formatted_address;
-              } else {
-                alert("No se pudo obtener tu direcci髇 actual.");
-              }
-            });
-          },
-          function () {
-            alert("Por favor activa la ubicaci髇 para usar esta funci髇.");
-          }
-        );
-      } else {
-        alert("Tu navegador no soporta geolocalizaci髇.");
-      }
-
-      document.querySelectorAll('.radio-option').forEach(opt => {
-        opt.addEventListener('click', () => {
-          document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
-          opt.classList.add('selected');
-          opt.querySelector('input').checked = true;
-        });
-      });
+    const pasajeroId = localStorage.getItem("user_id");
+    if (!pasajeroId) {
+      alert("Debes iniciar sesi贸n como cliente para solicitar un viaje.");
+      window.location.href = "login.html";
     }
 
-    document.getElementById("solicitudViaje").addEventListener("submit", function (event) {
+    document.getElementById("solicitudViaje").addEventListener("submit", async function (event) {
       event.preventDefault();
+      const metodoPago = document.querySelector("input[name='pago']:checked").value;
+      const destinoInput = document.getElementById("destino").value;
 
-      const origen = document.getElementById("origen").value;
-      const destino = document.getElementById("destino").value;
-
-      if (origen && destino) {
-        calcularRuta(origen, destino);
-      } else {
-        alert("Falta origen o destino.");
+      if (!origenCoords || !destinoCoords) {
+        alert("Las coordenadas de origen o destino no est谩n listas.");
+        return;
       }
-    });
-
-    function calcularRuta(origen, destino) {
-      const request = {
-        origin: origen,
-        destination: destino,
-        travelMode: google.maps.TravelMode.DRIVING,
-      };
-
-      directionsService.route(request, function (result, status) {
-        if (status === google.maps.DirectionsStatus.OK) {
-          directionsRenderer.setDirections(result);
-
-          const tiempo = result.routes[0].legs[0].duration.text;
-          const distanciaKm = result.routes[0].legs[0].distance.value / 1000;
-          const costo = (distanciaKm * 10).toFixed(2);
-
-          document.getElementById("tiempoEstimado").innerHTML = `
-            ? Tiempo estimado: <strong>${tiempo}</strong><br>
-            ?? Distancia: <strong>${distanciaKm.toFixed(2)} km</strong><br>
-            ?? Costo aproximado: <strong>$${costo} MXN</strong>
-          `;
-
-          document.getElementById("confirmarViaje").style.display = "block";
-        } else {
-          alert("No se pudo calcular la ruta. Intenta con otra direcci髇.");
-        }
-      });
-    }
-
-    document.getElementById("confirmarViaje").addEventListener("click", function () {
-      const metodoPago = document.querySelector('input[name="pago"]:checked').value;
-      const destino = directionsRenderer.getDirections().routes[0].legs[0].end_location;
 
       const viaje = {
-        pasajero_id: 1, // ID fijo para pruebas
+        pasajero_id: parseInt(pasajeroId),
         origen: origenCoords,
-        destino: {
-          lat: destino.lat(),
-          lng: destino.lng()
-        },
+        destino: destinoCoords,
         metodo_pago: metodoPago
       };
 
-      fetch("https://mototaxi-api-production.up.railway.app/viajes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(viaje)
-      })
-      .then(res => res.json())
-      .then(data => {
-        console.log("? Viaje guardado:", data);
-        window.location.href = "seguimiento.html";
-      })
-      .catch(err => {
-        console.error("? Error al guardar el viaje:", err);
-        alert("Error al guardar el viaje");
-      });
-    });
-  </script>
+      try {
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(viaje)
+        });
 
-  <!-- Google Maps -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUrEpKTCtslj4zw-2BDE_LO4wVABnI&callback=initMap&libraries=places">
+        const data = await res.json();
+        if (!res.ok) {
+          alert("Error al solicitar el viaje: " + data.error);
+          return;
+        }
+
+        alert("馃殨 Viaje solicitado con 茅xito.");
+        window.location.href = "seguimiento.html?viaje=" + data.viaje.id;
+      } catch (err) {
+        console.error("Error al guardar el viaje:", err);
+        alert("Error al guardar el viaje.");
+      }
+    });
+
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 32.6245, lng: -115.4521 },
+        zoom: 14
+      });
+
+      const destinoInput = document.getElementById("destino");
+      const autocomplete = new google.maps.places.Autocomplete(destinoInput);
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) {
+          alert("Por favor selecciona una direcci贸n v谩lida del autocompletado.");
+          return;
+        }
+        destinoCoords = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        };
+      });
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          origenCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          new google.maps.Marker({ position: origenCoords, map, label: "T煤" });
+          map.setCenter(origenCoords);
+          document.getElementById("estadoRuta").innerText = `Tu ubicaci贸n actual: ${origenCoords.lat}, ${origenCoords.lng}`;
+        }, () => {
+          alert("No se pudo obtener tu ubicaci贸n actual.");
+        });
+      }
+    }
   </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap"></script>
 </body>
 </html>
