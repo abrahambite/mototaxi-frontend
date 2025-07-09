@@ -1,7 +1,7 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Panel del Conductor</title>
   <style>
     body {
@@ -63,9 +63,12 @@
   <script>
     const API_URL = "https://mototaxi-api-production.up.railway.app";
 
-    // Simulación: obtener conductor_id desde localStorage (debes guardar esto al iniciar sesión)
-    const conductor_id = localStorage.getItem("conductor_id") || prompt("Ingresa tu ID de conductor:");
-    localStorage.setItem("conductor_id", conductor_id);
+    // Simulación: obtener conductor_id desde localStorage o pedirlo
+    let conductor_id = localStorage.getItem("conductor_id");
+    if (!conductor_id) {
+      conductor_id = prompt("Ingresa tu ID de conductor:");
+      localStorage.setItem("conductor_id", conductor_id);
+    }
 
     function cargarViajes() {
       fetch(`${API_URL}/viajes`)
@@ -119,7 +122,8 @@
         .then(res => res.json())
         .then(data => {
           alert(`✔ Viaje #${viajeId} aceptado`);
-          cargarViajes();
+          // Redirigir al seguimiento
+          window.location.href = `seguimiento.html?viaje=${viajeId}`;
         })
         .catch(err => {
           console.error("Error al aceptar viaje:", err);
@@ -129,8 +133,9 @@
         });
     }
 
-    // Cargar al inicio
+    // Iniciar la carga y actualizar cada 10 segundos
     cargarViajes();
+    setInterval(cargarViajes, 10000);
   </script>
 
 </body>
