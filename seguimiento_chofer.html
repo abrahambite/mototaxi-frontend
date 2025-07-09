@@ -1,4 +1,3 @@
-<!-- Archivo: seguimiento_chofer.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,11 +10,10 @@
   <div id="map" style="width:100%;height:400px;"></div>
   <button onclick="finalizarViaje()">Finalizar Viaje</button>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&callback=initMap" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA5-NK4WbfDUTSyvRh2DiPoPk9nxcq1mnc&callback=initMap" async defer></script>
 
   <script>
-    const tipo = localStorage.getItem("tipo_usuario");
-    if (tipo !== "conductor") {
+    if (localStorage.getItem("tipo_usuario") !== "conductor") {
       alert("Acceso denegado.");
       window.location.href = "login.html";
     }
