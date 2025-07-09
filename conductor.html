@@ -1,102 +1,137 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel del Conductor</title>
-  <link rel="stylesheet" href="styles.css">
   <style>
-    .viaje {
-      background-color: #ffffff;
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 10px;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
     }
-    .viaje button {
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    #viajes {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .viaje-card {
+      background: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 5px solid #007bff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .viaje-card h3 {
+      margin: 0 0 10px;
+    }
+
+    .viaje-card button {
+      background: #28a745;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      cursor: pointer;
       margin-top: 10px;
+      border-radius: 4px;
+    }
+
+    .viaje-card button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .estado {
+      font-weight: bold;
+      margin-top: 5px;
+      color: #f39c12;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>🛵 Viajes Disponibles</h2>
-    <div id="lista-viajes"></div>
-  </div>
+
+  <h1>Viajes Disponibles</h1>
+  <div id="viajes">Cargando viajes...</div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-      const choferId = localStorage.getItem("user_id");
-      const tipo = localStorage.getItem("tipo");
+    const API_URL = "https://mototaxi-api-production.up.railway.app";
 
-      if (!choferId || tipo !== "conductor") {
-        alert("Debes iniciar sesión como conductor para acceder a esta sección.");
-        window.location.href = "login.html";
-        return;
-      }
+    // Simulación: obtener conductor_id desde localStorage (debes guardar esto al iniciar sesión)
+    const conductor_id = localStorage.getItem("conductor_id") || prompt("Ingresa tu ID de conductor:");
+    localStorage.setItem("conductor_id", conductor_id);
 
-      await cargarViajes();
-    });
+    function cargarViajes() {
+      fetch(`${API_URL}/viajes`)
+        .then(res => res.json())
+        .then(data => {
+          const contenedor = document.getElementById("viajes");
+          contenedor.innerHTML = "";
 
-    async function cargarViajes() {
-      try {
-        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
-        if (!res.ok) throw new Error("No se pudo cargar la lista de viajes.");
+          const pendientes = data.filter(v => v.estado === "pendiente");
 
-        const viajes = await res.json();
-        const contenedor = document.getElementById("lista-viajes");
-        contenedor.innerHTML = "";
+          if (pendientes.length === 0) {
+            contenedor.innerHTML = "<p>No hay viajes disponibles por ahora.</p>";
+            return;
+          }
 
-        const pendientes = viajes.filter(v => v.estado === "pendiente" && !v.conductor_id);
+          pendientes.forEach(viaje => {
+            const card = document.createElement("div");
+            card.className = "viaje-card";
 
-        if (!pendientes.length) {
-          contenedor.innerHTML = "<p>No hay viajes disponibles por el momento.</p>";
-          return;
-        }
+            card.innerHTML = `
+              <h3>Viaje #${viaje.id}</h3>
+              <p><strong>Origen:</strong> ${JSON.stringify(viaje.origen)}</p>
+              <p><strong>Destino:</strong> ${JSON.stringify(viaje.destino)}</p>
+              <p class="estado">Estado: ${viaje.estado}</p>
+              <button onclick="aceptarViaje(${viaje.id}, this)">Aceptar Viaje</button>
+            `;
 
-        pendientes.forEach(viaje => {
-          const div = document.createElement("div");
-          div.className = "viaje";
-          div.innerHTML = `
-            <strong>Origen:</strong> ${viaje.origen.lat}, ${viaje.origen.lng}<br>
-            <strong>Destino:</strong> ${viaje.destino.lat}, ${viaje.destino.lng}<br><br>
-            <button onclick="aceptarViaje(${viaje.id})">🚕 Aceptar Viaje</button>
-          `;
-          contenedor.appendChild(div);
+            contenedor.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error("Error cargando viajes:", err);
+          document.getElementById("viajes").innerHTML = "<p>Error cargando viajes.</p>";
         });
-      } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error al cargar los viajes.");
-      }
     }
 
-    async function aceptarViaje(id) {
-      const choferId = localStorage.getItem("user_id");
-      if (!choferId) {
-        alert("No se ha detectado el ID del conductor. Inicia sesión de nuevo.");
-        return;
-      }
+    function aceptarViaje(viajeId, boton) {
+      boton.disabled = true;
+      boton.textContent = "Asignando...";
 
-      try {
-        const res = await fetch(`https://mototaxi-api-production.up.railway.app/viajes/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ estado: "aceptado", conductor_id: choferId })
+      fetch(`${API_URL}/viajes/${viajeId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          conductor_id: conductor_id,
+          estado: "aceptado"
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(`✔ Viaje #${viajeId} aceptado`);
+          cargarViajes();
+        })
+        .catch(err => {
+          console.error("Error al aceptar viaje:", err);
+          alert("❌ Error al aceptar el viaje");
+          boton.disabled = false;
+          boton.textContent = "Aceptar Viaje";
         });
-
-        const data = await res.json();
-        if (!res.ok) {
-          alert("❌ " + (data.error || "No se pudo aceptar el viaje"));
-          return;
-        }
-
-        alert("✅ Viaje aceptado con éxito.");
-        window.location.href = `seguimiento_chofer.html?viaje=${id}`;
-      } catch (err) {
-        console.error(err);
-        alert("Error al intentar aceptar el viaje.");
-      }
     }
+
+    // Cargar al inicio
+    cargarViajes();
   </script>
+
 </body>
 </html>
