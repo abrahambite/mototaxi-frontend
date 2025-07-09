@@ -2,14 +2,70 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Seguimiento del Chofer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seguimiento del Viaje</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f2f5;
+      text-align: center;
+    }
+    h2 {
+      color: #007bff;
+      margin-bottom: 20px;
+    }
+    .mapa {
+      width: 100%;
+      height: 400px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .info-box {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    a.btn {
+      display: inline-block;
+      padding: 12px 25px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    button {
+      width: 90%;
+      padding: 15px;
+      font-size: 16px;
+      background-color: crimson;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+    .label {
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h2>🚖 Tu Chofer en camino</h2>
-  <p>👤 Nombre: <span id="chofer">Cargando...</span></p>
-  <p>📞 Contacto: <span id="contacto">Cargando...</span></p>
-  <p>🏍 Unidad: <span id="unidad">Cargando...</span></p>
-  <div id="map" style="width:100%;height:400px;"></div>
+  <h2>🛺 Tu Chofer en camino</h2>
+  
+  <div id="viajeInfo" class="info-box">
+    <p><span class="label">👤 Nombre:</span> <span id="chofer">Cargando...</span></p>
+    <p><span class="label">📞 Contacto:</span> <span id="contacto">Cargando...</span></p>
+    <p><span class="label">🏍 Unidad:</span> <span id="unidad">Cargando...</span></p>
+    <br>
+    <a id="btnGoogleMaps" href="#" target="_blank" class="btn">Abrir en Google Maps</a>
+  </div>
+
+  <div id="map" class="mapa"></div>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA5-NK4WbfDUTSyvRh2DiPoPk9nxcq1mnc&callback=initMap" async defer></script>
 
@@ -38,13 +94,28 @@
     }
 
     async function cargarInfo() {
-      const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
-      const viajes = await res.json();
-      const viaje = viajes.find(v => v.id == viajeId);
-      if (viaje) {
+      try {
+        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+        const viajes = await res.json();
+        const viaje = viajes.find(v => v.id == viajeId);
+
+        if (!viaje) {
+          alert("Viaje no encontrado");
+          return;
+        }
+
         document.getElementById("chofer").textContent = viaje.nombre_conductor || "No asignado";
         document.getElementById("contacto").textContent = viaje.contacto_conductor || "No disponible";
         document.getElementById("unidad").textContent = viaje.vehiculo || "No disponible";
+
+        if (viaje.destino) {
+          const lat = viaje.destino.lat;
+          const lng = viaje.destino.lng;
+          document.getElementById("btnGoogleMaps").href =
+            `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+        }
+      } catch (err) {
+        console.error("Error al cargar datos del viaje:", err);
       }
     }
 
