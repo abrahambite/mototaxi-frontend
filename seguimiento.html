@@ -49,29 +49,31 @@
       border: none;
       border-radius: 8px;
     }
-    .label {
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
-  <h2>🛺 Tu Chofer en camino</h2>
+  <h2>🗺️ Seguimiento del Viaje</h2>
   
   <div id="viajeInfo" class="info-box">
-    <p><span class="label">👤 Nombre:</span> <span id="chofer">Cargando...</span></p>
-    <p><span class="label">📞 Contacto:</span> <span id="contacto">Cargando...</span></p>
-    <p><span class="label">🏍 Unidad:</span> <span id="unidad">Cargando...</span></p>
+    <p><strong>👤 Chofer:</strong> <span id="chofer">Cargando...</span></p>
+    <p><strong>🏍 Unidad:</strong> <span id="unidad">Cargando...</span></p>
+    <p><strong>📞 Contacto:</strong> <span id="contacto">Cargando...</span></p>
     <br>
     <a id="btnGoogleMaps" href="#" target="_blank" class="btn">Abrir en Google Maps</a>
   </div>
 
   <div id="map" class="mapa"></div>
 
+  <button onclick="finalizarViaje()">✅ Finalizar Viaje</button>
+
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA5-NK4WbfDUTSyvRh2DiPoPk9nxcq1mnc&callback=initMap" async defer></script>
 
   <script>
-    const viajeId = new URLSearchParams(window.location.search).get("viaje");
-    let map, marker;
+    let map;
+    let marcador;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const viajeId = urlParams.get("viaje");
 
     function initMap() {
       navigator.geolocation.getCurrentPosition(pos => {
@@ -81,45 +83,64 @@
         };
 
         map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 14,
+          zoom: 15,
           center: ubicacion
         });
 
-        marker = new google.maps.Marker({
+        marcador = new google.maps.Marker({
           position: ubicacion,
           map,
-          icon: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png"
+          title: "Tu ubicación",
+          icon: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
         });
+
+        setInterval(actualizarUbicacion, 10000);
+      }, () => alert("No se pudo obtener tu ubicación"));
+    }
+
+    function actualizarUbicacion() {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const nuevaUbicacion = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
+        marcador.setPosition(nuevaUbicacion);
+        map.setCenter(nuevaUbicacion);
       });
     }
 
-    async function cargarInfo() {
+    async function cargarDestino() {
       try {
         const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
         const viajes = await res.json();
         const viaje = viajes.find(v => v.id == viajeId);
 
-        if (!viaje) {
-          alert("Viaje no encontrado");
-          return;
-        }
+        if (!viaje || !viaje.destino) throw new Error("Viaje no encontrado");
 
+        // Mostrar info del chofer
         document.getElementById("chofer").textContent = viaje.nombre_conductor || "No asignado";
         document.getElementById("contacto").textContent = viaje.contacto_conductor || "No disponible";
         document.getElementById("unidad").textContent = viaje.vehiculo || "No disponible";
 
-        if (viaje.destino) {
-          const lat = viaje.destino.lat;
-          const lng = viaje.destino.lng;
-          document.getElementById("btnGoogleMaps").href =
-            `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-        }
+        // Link para abrir en Google Maps
+        const destinoCoords = viaje.destino;
+        document.getElementById("btnGoogleMaps").href =
+          `https://www.google.com/maps/dir/?api=1&destination=${destinoCoords.lat},${destinoCoords.lng}`;
+
       } catch (err) {
-        console.error("Error al cargar datos del viaje:", err);
+        console.error("Error al cargar el viaje:", err);
+        document.getElementById("chofer").textContent = "No disponible";
+        document.getElementById("contacto").textContent = "No disponible";
+        document.getElementById("unidad").textContent = "No disponible";
       }
     }
 
-    cargarInfo();
+    function finalizarViaje() {
+      alert("✅ Viaje finalizado correctamente");
+      window.location.href = "index.html";
+    }
+
+    cargarDestino();
   </script>
 </body>
 </html>
