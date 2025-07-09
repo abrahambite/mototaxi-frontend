@@ -1,142 +1,70 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>Panel del Conductor</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-    }
+<!-- Archivo: conductor.html -->
+<!-- Ya redirige correctamente a seguimiento_chofer.html -->
 
-    h1 {
-      text-align: center;
-      color: #333;
-    }
+<script>
+  const API_URL = "https://mototaxi-api-production.up.railway.app";
+  let conductor_id = localStorage.getItem("conductor_id");
+  if (!conductor_id) {
+    conductor_id = prompt("Ingresa tu ID de conductor:");
+    localStorage.setItem("conductor_id", conductor_id);
+    localStorage.setItem("tipo_usuario", "conductor");
+  }
 
-    #viajes {
-      max-width: 800px;
-      margin: 0 auto;
-    }
+  function cargarViajes() {
+    fetch(`${API_URL}/viajes`)
+      .then(res => res.json())
+      .then(data => {
+        const contenedor = document.getElementById("viajes");
+        contenedor.innerHTML = "";
 
-    .viaje-card {
-      background: white;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-left: 5px solid #007bff;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
+        const pendientes = data.filter(v => v.estado === "pendiente");
 
-    .viaje-card h3 {
-      margin: 0 0 10px;
-    }
+        if (pendientes.length === 0) {
+          contenedor.innerHTML = "<p>No hay viajes disponibles por ahora.</p>";
+          return;
+        }
 
-    .viaje-card button {
-      background: #28a745;
-      color: white;
-      padding: 8px 12px;
-      border: none;
-      cursor: pointer;
-      margin-top: 10px;
-      border-radius: 4px;
-    }
+        pendientes.forEach(viaje => {
+          const card = document.createElement("div");
+          card.className = "viaje-card";
 
-    .viaje-card button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
+          card.innerHTML = `
+            <h3>Viaje #${viaje.id}</h3>
+            <p><strong>Origen:</strong> ${JSON.stringify(viaje.origen)}</p>
+            <p><strong>Destino:</strong> ${JSON.stringify(viaje.destino)}</p>
+            <p class="estado">Estado: ${viaje.estado}</p>
+            <button onclick="aceptarViaje(${viaje.id}, this)">Aceptar Viaje</button>
+          `;
 
-    .estado {
-      font-weight: bold;
-      margin-top: 5px;
-      color: #f39c12;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>Viajes Disponibles</h1>
-  <div id="viajes">Cargando viajes...</div>
-
-  <script>
-    const API_URL = "https://mototaxi-api-production.up.railway.app";
-
-    // Simulación: obtener conductor_id desde localStorage o pedirlo
-    let conductor_id = localStorage.getItem("conductor_id");
-    if (!conductor_id) {
-      conductor_id = prompt("Ingresa tu ID de conductor:");
-      localStorage.setItem("conductor_id", conductor_id);
-    }
-
-    function cargarViajes() {
-      fetch(`${API_URL}/viajes`)
-        .then(res => res.json())
-        .then(data => {
-          const contenedor = document.getElementById("viajes");
-          contenedor.innerHTML = "";
-
-          const pendientes = data.filter(v => v.estado === "pendiente");
-
-          if (pendientes.length === 0) {
-            contenedor.innerHTML = "<p>No hay viajes disponibles por ahora.</p>";
-            return;
-          }
-
-          pendientes.forEach(viaje => {
-            const card = document.createElement("div");
-            card.className = "viaje-card";
-
-            card.innerHTML = `
-              <h3>Viaje #${viaje.id}</h3>
-              <p><strong>Origen:</strong> ${JSON.stringify(viaje.origen)}</p>
-              <p><strong>Destino:</strong> ${JSON.stringify(viaje.destino)}</p>
-              <p class="estado">Estado: ${viaje.estado}</p>
-              <button onclick="aceptarViaje(${viaje.id}, this)">Aceptar Viaje</button>
-            `;
-
-            contenedor.appendChild(card);
-          });
-        })
-        .catch(err => {
-          console.error("Error cargando viajes:", err);
-          document.getElementById("viajes").innerHTML = "<p>Error cargando viajes.</p>";
+          contenedor.appendChild(card);
         });
-    }
+      });
+  }
 
-    function aceptarViaje(viajeId, boton) {
-      boton.disabled = true;
-      boton.textContent = "Asignando...";
+  function aceptarViaje(viajeId, boton) {
+    boton.disabled = true;
+    boton.textContent = "Asignando...";
 
-      fetch(`${API_URL}/viajes/${viajeId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          conductor_id: conductor_id,
-          estado: "aceptado"
-        })
+    fetch(`${API_URL}/viajes/${viajeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conductor_id: conductor_id,
+        estado: "aceptado"
       })
-        .then(res => res.json())
-        .then(data => {
-          alert(`✔ Viaje #${viajeId} aceptado`);
-          // Redirigir al seguimiento
-          window.location.href = `seguimiento.html?viaje=${viajeId}`;
-        })
-        .catch(err => {
-          console.error("Error al aceptar viaje:", err);
-          alert("❌ Error al aceptar el viaje");
-          boton.disabled = false;
-          boton.textContent = "Aceptar Viaje";
-        });
-    }
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert("✔ Viaje aceptado");
+        window.location.href = `seguimiento_chofer.html?viaje=${viajeId}`;
+      })
+      .catch(err => {
+        alert("Error al aceptar viaje");
+        boton.disabled = false;
+        boton.textContent = "Aceptar Viaje";
+      });
+  }
 
-    // Iniciar la carga y actualizar cada 10 segundos
-    cargarViajes();
-    setInterval(cargarViajes, 10000);
-  </script>
-
-</body>
-</html>
+  cargarViajes();
+  setInterval(cargarViajes, 10000);
+</script>
