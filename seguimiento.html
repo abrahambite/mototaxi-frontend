@@ -2,144 +2,78 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Seguimiento del Viaje</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento de Viaje - MotoTaxi</title>
+  <link rel="stylesheet" href="styles.css">
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f0f2f5;
-      text-align: center;
-    }
-    h2 {
-      color: #007bff;
-      margin-bottom: 20px;
-    }
-    .mapa {
-      width: 100%;
-      height: 400px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
-    .info-box {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    a.btn {
-      display: inline-block;
-      padding: 12px 25px;
-      background-color: #28a745;
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    button {
-      width: 90%;
-      padding: 15px;
-      font-size: 16px;
-      background-color: crimson;
-      color: white;
-      border: none;
-      border-radius: 8px;
-    }
+    #map { width: 100%; height: 300px; border-radius: 10px; margin-bottom: 20px; }
+    .container { padding: 30px; text-align: center; font-family: Arial; }
+    .info { margin-top: 15px; font-size: 16px; line-height: 1.6em; }
+    .info b { display: block; margin-top: 8px; }
   </style>
 </head>
 <body>
-  <h2>🗺️ Seguimiento del Viaje</h2>
-  
-  <div id="viajeInfo" class="info-box">
-    <p><strong>👤 Chofer:</strong> <span id="chofer">Cargando...</span></p>
-    <p><strong>🏍 Unidad:</strong> <span id="unidad">Cargando...</span></p>
-    <p><strong>📞 Contacto:</strong> <span id="contacto">Cargando...</span></p>
-    <br>
-    <a id="btnGoogleMaps" href="#" target="_blank" class="btn">Abrir en Google Maps</a>
+  <div class="container">
+    <img src="img/logo.png" alt="Logo" style="height: 60px; margin-bottom: 15px">
+    <h2>Tu unidad viene en camino 🛵</h2>
+    <div id="map"></div>
+    <div class="info" id="info"></div>
+    <button onclick="window.location.href='solicitud-viaje.html'" style="margin-top: 20px; padding: 12px 20px; background-color: crimson; color: white; border: none; border-radius: 8px;">
+      Cancelar Viaje
+    </button>
   </div>
 
-  <div id="map" class="mapa"></div>
-
-  <button onclick="finalizarViaje()">✅ Finalizar Viaje</button>
-
-  <!-- ✅ CLAVE API RESTAURADA -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdREUEpKTCTslj4zw-2BDE_LO4wVABnI&callback=initMap" async defer></script>
-
   <script>
-    let map;
-    let marcador;
+    async function initMap() {
+      const response = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+      const data = await response.json();
+      const viaje = data[data.length - 1];
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const viajeId = urlParams.get("viaje");
-
-    function initMap() {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const ubicacion = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude
-        };
-
-        map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 15,
-          center: ubicacion
-        });
-
-        marcador = new google.maps.Marker({
-          position: ubicacion,
-          map,
-          title: "Tu ubicación",
-          icon: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-        });
-
-        setInterval(actualizarUbicacion, 10000);
-      }, () => alert("No se pudo obtener tu ubicación"));
-    }
-
-    function actualizarUbicacion() {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const nuevaUbicacion = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude
-        };
-        marcador.setPosition(nuevaUbicacion);
-        map.setCenter(nuevaUbicacion);
-      });
-    }
-
-    async function cargarDestino() {
-      try {
-        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
-        const viajes = await res.json();
-        const viaje = viajes.find(v => v.id == viajeId);
-
-        if (!viaje || !viaje.destino) throw new Error("Viaje no encontrado");
-
-        document.getElementById("chofer").textContent = viaje.nombre_conductor || "No asignado";
-        document.getElementById("contacto").textContent = viaje.contacto_conductor || "No disponible";
-        document.getElementById("unidad").textContent = viaje.vehiculo || "No disponible";
-
-        const destinoCoords = viaje.destino;
-        document.getElementById("btnGoogleMaps").href =
-          `https://www.google.com/maps/dir/?api=1&destination=${destinoCoords.lat},${destinoCoords.lng}`;
-
-      } catch (err) {
-        document.getElementById("chofer").textContent = "No disponible";
-        document.getElementById("contacto").textContent = "No disponible";
-        document.getElementById("unidad").textContent = "No disponible";
-        console.error("Error al cargar destino:", err);
+      if (!viaje || !viaje.conductor_id) {
+        document.getElementById("map").style.display = "none";
+        document.getElementById("info").innerHTML = "<p><b>Esperando que un conductor acepte tu viaje...</b></p>";
+        return;
       }
-    }
 
-    function finalizarViaje() {
-      alert("✅ Viaje finalizado correctamente");
-      window.location.href = "index.html";
-    }
+      const origen = viaje.origen || { lat: 32.645, lng: -115.474 };
+      const destino = viaje.destino || { lat: 32.652, lng: -115.472 };
 
-    cargarDestino();
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: origen
+      });
+
+      const marker = new google.maps.Marker({
+        position: origen,
+        map,
+        icon: "https://cdn-icons-png.flaticon.com/512/8082/8082994.png",
+        scaledSize: new google.maps.Size(40, 40)
+      });
+
+      // Movimiento automático simulado
+      let step = 0;
+      const totalSteps = 50;
+      const latStep = (destino.lat - origen.lat) / totalSteps;
+      const lngStep = (destino.lng - origen.lng) / totalSteps;
+
+      const move = setInterval(() => {
+        if (step >= totalSteps) return clearInterval(move);
+        const lat = origen.lat + latStep * step;
+        const lng = origen.lng + lngStep * step;
+        marker.setPosition({ lat, lng });
+        map.panTo({ lat, lng });
+        step++;
+      }, 300);
+
+      document.getElementById("info").innerHTML = `
+        <b>🧑‍✈️ Chofer:</b> ${viaje.nombre_conductor || "Luis Ramírez"}
+        <b>🏍️ Unidad:</b> ${viaje.vehiculo || "Italika 125cc - Negro"}
+        <b>📞 Contacto:</b> ${viaje.contacto_conductor || "686-123-4567"}
+      `;
+    }
   </script>
+
+  <!-- ✅ API Key activa -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkll2RGKh0lQrKjetY8jvrqPsVd0JHJAU&callback=initMap"></script>
 </body>
 </html>
