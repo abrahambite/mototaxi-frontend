@@ -1,76 +1,27 @@
+<!-- Archivo: seguimiento_chofer.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Seguimiento del Viaje</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f0f2f5;
-      text-align: center;
-    }
-    h2 {
-      color: #007bff;
-      margin-bottom: 20px;
-    }
-    .mapa {
-      width: 100%;
-      height: 400px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
-    .info-box {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    a.btn {
-      display: inline-block;
-      padding: 12px 25px;
-      background-color: #28a745;
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    button {
-      width: 90%;
-      padding: 15px;
-      font-size: 16px;
-      background-color: crimson;
-      color: white;
-      border: none;
-      border-radius: 8px;
-    }
-  </style>
+  <title>Ruta del Chofer</title>
 </head>
 <body>
-  <h2>🗺️ Seguimiento del Viaje</h2>
-  
-  <div id="viajeInfo" class="info-box">
-    <strong>Destino:</strong> <span id="destinoTexto">Cargando...</span><br><br>
-    <a id="btnGoogleMaps" href="#" target="_blank" class="btn">Abrir en Google Maps</a>
-  </div>
+  <h2>🛵 Ruta del Chofer</h2>
+  <p id="destino">Destino: cargando...</p>
+  <div id="map" style="width:100%;height:400px;"></div>
+  <button onclick="finalizarViaje()">Finalizar Viaje</button>
 
-  <div id="map" class="mapa"></div>
-
-  <button onclick="finalizarViaje()">✅ Finalizar Viaje</button>
-
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA5-NK4WbfDUTSyvRh2DiPoPk9nxcq1mnc&callback=initMap" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&callback=initMap" async defer></script>
 
   <script>
-    let map;
-    let marcador;
+    const tipo = localStorage.getItem("tipo_usuario");
+    if (tipo !== "conductor") {
+      alert("Acceso denegado.");
+      window.location.href = "login.html";
+    }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const viajeId = urlParams.get("viaje");
+    const viajeId = new URLSearchParams(window.location.search).get("viaje");
+    let map, marker;
 
     function initMap() {
       navigator.geolocation.getCurrentPosition(pos => {
@@ -84,49 +35,39 @@
           center: ubicacion
         });
 
-        marcador = new google.maps.Marker({
+        marker = new google.maps.Marker({
           position: ubicacion,
           map,
-          title: "Tu ubicación",
-          icon: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          title: "Tu ubicación"
         });
 
         setInterval(actualizarUbicacion, 10000);
-      }, () => alert("No se pudo obtener tu ubicación"));
+      });
     }
 
     function actualizarUbicacion() {
       navigator.geolocation.getCurrentPosition(pos => {
-        const nuevaUbicacion = {
+        const nueva = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude
         };
-        marcador.setPosition(nuevaUbicacion);
-        map.setCenter(nuevaUbicacion);
+        marker.setPosition(nueva);
+        map.setCenter(nueva);
       });
     }
 
     async function cargarDestino() {
-      try {
-        const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
-        const viajes = await res.json();
-        const viaje = viajes.find(v => v.id == viajeId);
-
-        if (!viaje || !viaje.destino) throw new Error("Viaje no encontrado");
-
-        const destinoCoords = viaje.destino;
-        document.getElementById("destinoTexto").innerText = `${destinoCoords.lat}, ${destinoCoords.lng}`;
-        document.getElementById("btnGoogleMaps").href =
-          `https://www.google.com/maps/dir/?api=1&destination=${destinoCoords.lat},${destinoCoords.lng}`;
-
-      } catch (err) {
-        document.getElementById("destinoTexto").innerText = "No disponible";
-        console.error("Error al cargar destino:", err);
+      const res = await fetch("https://mototaxi-api-production.up.railway.app/viajes");
+      const viajes = await res.json();
+      const viaje = viajes.find(v => v.id == viajeId);
+      if (viaje && viaje.destino) {
+        document.getElementById("destino").textContent = `Destino: ${viaje.destino.lat}, ${viaje.destino.lng}`;
       }
     }
 
     function finalizarViaje() {
-      alert("✅ Viaje finalizado correctamente");
+      alert("✅ Viaje finalizado");
       window.location.href = "conductor.html";
     }
 
