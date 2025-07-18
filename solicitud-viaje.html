@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,13 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solicitar Viaje - MotoTaxi</title>
   <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="https://unpkg.com/@googlemaps/extended-component-library@0.3"></script>
 </head>
 <body>
   <div class="container">
     <h2>Solicitar un Viaje</h2>
+
     <form id="formularioRuta">
-      <label for="destino">Destino:</label>
-      <input type="text" id="destino" name="destino" placeholder="Ingresa tu destino" required />
+      <label for="autocomplete">Destino:</label>
+      <gmpx-place-autocomplete
+        id="autocomplete"
+        placeholder="Ingresa tu destino"
+        style="width: 100%; height: 40px; padding: 10px;"
+      ></gmpx-place-autocomplete>
 
       <label>Método de Pago:</label>
       <div class="radio-container">
@@ -48,14 +55,13 @@
       directionsRenderer = new google.maps.DirectionsRenderer();
       directionsRenderer.setMap(map);
 
-      const inputDestino = document.getElementById("destino");
-      const autocomplete = new google.maps.places.Autocomplete(inputDestino);
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
+      const autocomplete = document.getElementById("autocomplete");
+      autocomplete.addEventListener("gmpx-placeautocomplete:place_changed", (e) => {
+        const place = e.detail;
         if (place.geometry) {
           destinoCoords = {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
+            lat: place.geometry.location.lat,
+            lng: place.geometry.location.lng
           };
         }
       });
@@ -138,7 +144,6 @@
     });
   </script>
 
-  <!-- ✅ CLAVE API VÁLIDA -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkll2RGKh0lQrKjetY8jvrqPsVd0JHJAU&libraries=places&callback=initMap"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkll2RGKh0lQrKjetY8jvrqPsVd0JHJAU&libraries=maps,marker,places&callback=initMap"></script>
 </body>
 </html>
