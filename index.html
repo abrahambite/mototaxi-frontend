@@ -1,80 +1,39 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar Sesión - MotoTaxi</title>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f0f4f8; }
-    .login-container {
-      width: 320px;
-      margin: 100px auto;
-      padding: 20px;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    button { background-color: #28a745; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #218838; }
-  </style>
-</head>
-<body>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const loginForm = document.getElementById("loginForm");
 
-  <div class="login-container">
-    <h2>Iniciar Sesión</h2>
-    <form id="loginForm">
-      <input type="text" id="telefono" placeholder="Número de Teléfono" required>
-      <input type="password" id="password" placeholder="Contraseña" required>
-      <button type="submit">Ingresar</button>
-    </form>
-    <p style="margin-top: 10px;">
-      ¿No tienes cuenta? <a href="registro_cliente.html">Regístrate como cliente</a>
-    </p>
-  </div>
+  loginForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const telefono = document.getElementById("telefono").value;
+    const password = document.getElementById("password").value;
 
-  <script>
-    document.getElementById("loginForm").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const telefono = document.getElementById("telefono").value;
-      const password = document.getElementById("password").value;
+    try {
+      const response = await fetch("https://mototaxi-api-production.up.railway.app/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telefono, password })
+      });
 
-      try {
-        const response = await fetch("https://mototaxi-api-production.up.railway.app/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ telefono, password })
-        });
+      const data = await response.json();
 
-        const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem("user_id", data.user.id);
+        localStorage.setItem("tipo_usuario", data.user.tipo);
 
-        if (response.ok) {
-          localStorage.setItem("user_id", data.user.id);
-          localStorage.setItem("tipo", data.user.tipo);
-          if (data.user.tipo === "conductor") {
-            window.location.href = "conductor.html";
-          } else if (data.user.tipo === "admin") {
-            window.location.href = "admin.html";
-          } else {
-            window.location.href = "solicitud-viaje.html";
-          }
+        if (data.user.tipo === "conductor") {
+          window.location.href = "conductor.html";
+        } else if (data.user.tipo === "admin") {
+          window.location.href = "admin.html";
         } else {
-          alert("Error en el login: " + data.error);
+          window.location.href = "solicitud-viaje.html";
         }
-      } catch (error) {
-        alert("Error de conexión con el servidor");
-        console.error(error);
+      } else {
+        alert("Error: " + data.error);
       }
-    });
-  </script>
-
-</body>
-</html>
+    } catch (error) {
+      alert("Error al conectar al servidor.");
+      console.error("Error:", error);
+    }
+  });
+});
+</script>
