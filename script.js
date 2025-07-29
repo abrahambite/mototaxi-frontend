@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const telefono = document.getElementById("telefono").value;
       const password = document.getElementById("password").value;
       try {
-        const response = await fetch("https://mototaxi-api-production.up.railway.app/login", {
+        const response = await fetch("https://mototaxi-api-production.up.railway.app/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ telefono, password })
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const licencia = document.getElementById("licencia")?.value || "";
       const vehiculo = document.getElementById("vehiculo")?.value || "";
       try {
-        const response = await fetch("https://mototaxi-api-production.up.railway.app/register", {
+        const response = await fetch("https://mototaxi-api-production.up.railway.app/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ nombre, telefono, password, userType, licencia, vehiculo })
